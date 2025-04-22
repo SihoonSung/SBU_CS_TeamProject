@@ -1,0 +1,12 @@
+### Shape
+- (WACV'21) End-to-end Lane Shape Prediction with Transformers,  [[Paper]](https://arxiv.org/abs/2011.04233), [[Code]](https://github.com/liuruijin17/LSTR)
+- (arXiv 2022.01) ShapeFormer: Transformer-based Shape Completion via Sparse Representation,  [[Paper]](https://arxiv.org/abs/2201.10326), [[Project]](https://shapeformer.github.io/)
+- (arXiv 2022.10) AutoSDF: Shape Priors for 3D Completion, Reconstruction and Generation, [[Paper]](https://arxiv.org/pdf/2210.12381.pdf)
+- (arXiv 2022.10) mm-Wave Radar Hand Shape Classification Using Deformable Transformers, [[Paper]](https://arxiv.org/pdf/2210.13079.pdf)
+- (arxiv 2023.07) DiT-3D: Exploring Plain Diffusion Transformers for 3D Shape Generation, [[Paper]](https://arxiv.org/pdf/2307.01831.pdf)
+- (arxiv 2023.09) DeFormer: Integrating Transformers with Deformable Models for 3D Shape Abstraction from a Single Image, [[Paper]](https://arxiv.org/pdf/2309.12594.pdf)
+- (arxiv 2024.05) PT43D: A Probabilistic Transformer for Generating 3D Shapes from Single Highly-Ambiguous RGB Images, [[Paper]](https://arxiv.org/pdf/2405.11914.pdf)
+- (arxiv 2024.07) PASTA: Controllable Part-Aware Shape Generation with Autoregressive Transformers, [[Paper]](https://arxiv.org/pdf/2407.13677.pdf)
+- (arxiv 2024.09) VSFormer: Mining Correlations in Flexible View Set for Multi-view 3D Shape Understanding, [[Paper]](https://arxiv.org/pdf/2409.09254.pdf), [[Code]](https://github.com/auniquesun/VSFormer)
+- (arxiv 2024.11) POC-SLT: Partial Object Completion with SDF Latent Transformers, [[Paper]](https://arxiv.org/pdf/2411.05419.pdf)
+- (arxiv 2024.11) Geometric Point Attention Transformer for 3D Shape Reassembly, [[Paper]](https://arxiv.org/pdf/2411.17788.pdf)
