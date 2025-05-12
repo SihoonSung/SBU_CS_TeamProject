@@ -11,7 +11,13 @@ import EstimateSystem from './estimate_system';
 import Community from './community';
 import Login from './login';
 
+
 function App() {
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarVisible(!sidebarVisible);
+  };
   return (
     <Router>
       <>
@@ -49,22 +55,22 @@ function App() {
         </nav>
 
         <ul className="sidebar" id="sidebar" style={{ display: sidebarVisible ? 'flex' : 'none' }}>
-          <li className="hideOnMobile">
+          <li>
             <Link to="/team">Team</Link>
           </li>
-          <li className="hideOnMobile">
+          <li>
             <Link to="/player">Player</Link>
           </li>
-          <li className="hideOnMobile">
+          <li>
             <Link to="/schedule">Schedule</Link>
           </li>
-          <li className="hideOnMobile">
-            <Link to="/estimate">Estimate System</Link>
+          <li>
+            <Link to="/estimate-system">Estimate System</Link>
           </li>
-          <li className="hideOnMobile">
+          <li>
             <Link to="/community">Community</Link>
           </li>
-          <li className="hideOnMobile">
+          <li>
             <Link to="/login">Login</Link>
           </li>
         </ul>
