@@ -1,6 +1,6 @@
 function Home() {
     return (
-        <div className="text" style={{ color: "black" }}>
+        <div className="text">
             <ul>
                 <li>Facility Reservation
                     <ul>
