@@ -3,7 +3,13 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import Home from './home';xw
+import Home from './home';
+import Team from './team';
+import Player from './player';
+import Schedule from './schedule';
+import EstimateSystem from './estimate_system';
+import Community from './community';
+import Login from './login';
 
 function App() {
   return (
@@ -13,10 +19,25 @@ function App() {
           <div className="nav-container">
             <ul className="navbar">
               <li className="hideOnMobile">
-                <Link to="/facility-list">Facility List</Link>
+                <Link to="/">KBO</Link>
               </li>
               <li className="hideOnMobile">
-                <Link to="/facility-reservation">Facility Reservation</Link>
+                <Link to="/team">Team</Link>
+              </li>
+              <li className="hideOnMobile">
+                <Link to="/player">Player</Link>
+              </li>
+              <li className="hideOnMobile">
+                <Link to="/schedule">Schedule</Link>
+              </li>
+              <li className="hideOnMobile">
+                <Link to="/estimate-system">Estimate System</Link>
+              </li>
+              <li className="hideOnMobile">
+                <Link to="/community">Community</Link>
+              </li>
+              <li className="hideOnMobile">
+                <Link to="/login">Login</Link>
               </li>
               <li className="menu-button" onClick={toggleSidebar}>
                 <svg id="menu" xmlns="http://www.w3.org/2000/svg" height="25px" viewBox="0 -1200 960 960" width="25px" fill="white">
@@ -28,17 +49,33 @@ function App() {
         </nav>
 
         <ul className="sidebar" id="sidebar" style={{ display: sidebarVisible ? 'flex' : 'none' }}>
-          <li>
-            <Link to="/facility-list">Facility List</Link>
+          <li className="hideOnMobile">
+            <Link to="/team">Team</Link>
           </li>
-          <li>
-            <Link to="/facility-reservation">Facility Reservation</Link>
+          <li className="hideOnMobile">
+            <Link to="/player">Player</Link>
+          </li>
+          <li className="hideOnMobile">
+            <Link to="/schedule">Schedule</Link>
+          </li>
+          <li className="hideOnMobile">
+            <Link to="/estimate">Estimate System</Link>
+          </li>
+          <li className="hideOnMobile">
+            <Link to="/community">Community</Link>
+          </li>
+          <li className="hideOnMobile">
+            <Link to="/login">Login</Link>
           </li>
         </ul>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/facility-list" element={<FacilityList />} />
-          <Route path="/facility-reservation" element={<FacilityReservation />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/player" element={<Player />} />
+          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/estimate-system" element={<EstimateSystem />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </>
     </Router>
