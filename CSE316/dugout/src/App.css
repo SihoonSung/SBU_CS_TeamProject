@@ -44,3 +44,46 @@ nav{
 .navbar li:hover{
   background-color: #555;
 }
+
+.sidebar {
+  position: relative; 
+  width: 100%;
+  background-color: #E6E6FA;
+  display: none;
+  flex-direction: column;
+  padding: 10px 0;
+  z-index: 0;
+}
+.sidebar li {
+  list-style: none;
+  width: 100%;
+}
+.sidebar li a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 10px;
+  text-decoration: none;
+  color: black;
+  font-size: 18px;
+  width: 100%;
+}
+.sidebar li:hover{
+  background-color: #aaa;
+}
+
+.menu-button{
+  display: none;
+  padding: 0 30px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+@media(max-width: 850px){
+  .hideOnMobile{
+      display: none;
+  }.menu-button{
+      display: block;
+  }
+}
