@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import Home from './home';
+import Home from './home.jsx';
 import Team from './team';
 import Player from './player';
 import Schedule from './schedule';
