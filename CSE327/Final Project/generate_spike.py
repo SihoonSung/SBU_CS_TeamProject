@@ -48,7 +48,7 @@ for _, row in tqdm(df.iterrows(), total=len(df)):
     }
     spike_data.append(spike_row)
 
-# 저장
+# save
 spike_df = pd.DataFrame(spike_data)
 spike_df.to_csv(OUTPUT_CSV, index=False)
 print(f"Spike-encoded CSV saved to {OUTPUT_CSV}")
