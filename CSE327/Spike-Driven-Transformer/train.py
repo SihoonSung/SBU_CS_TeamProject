@@ -36,6 +36,7 @@ from timm.models import (
 )
 from timm.models.helpers import clean_state_dict
 from timm.utils import *
+from timm.utils import accuracy, reduce_tensor
 from timm.loss import (
     LabelSmoothingCrossEntropy,
     SoftTargetCrossEntropy,
@@ -1348,7 +1349,7 @@ def train_one_epoch(
     last_idx = len(loader) - 1
     num_updates = epoch * len(loader)
     loop = tqdm(enumerate(loader), total=len(loader), desc=f"Epoch {epoch}")
-    for batch_idx, (input, target) in enumerate(loader):
+    for batch_idx, (input, target) in loop:
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)
         input = input.to("cpu").float()  # shape: [B, T, C]
@@ -1389,6 +1390,7 @@ def train_one_epoch(
                     raise ValueError(f"Unexpected output shape: {output.shape}")
 
         loss = loss_fn(output, target)
+        losses_m.update(loss.item(), input.size(0))
 
         optimizer.zero_grad()
         if loss_scaler is not None:
@@ -1470,12 +1472,14 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix="")
     top5_m = AverageMeter()
 
     model.eval()
-    # functional.reset_net(model)
+    functional.reset_net(model)
 
     end = time.time()
     last_idx = len(loader) - 1
     with torch.no_grad():
-        for batch_idx, (input, target) in enumerate(loader):
+        loop = tqdm(enumerate(loader), total=len(loader), desc=f"Valid{log_suffix}")
+        for batch_idx, (input, target) in loop:
+            functional.reset_net(model)
             input = input.to("cpu").float()
             if (target >= 1000).sum() != 0 or (target < 0).sum() != 0:
                 print(target)
@@ -1511,17 +1515,6 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix="")
                         raise ValueError(f"Unexpected output shape: {output.shape}")
                     loss = loss_fn(output, target)
                     
-        # augmentation reduction (only applies after flattening)
-        reduce_factor = args.tta
-        if reduce_factor > 1:
-            output = output.unfold(0, reduce_factor, reduce_factor).mean(dim=2)
-            target = target[0 : target.size(0) : reduce_factor]
-
-            if (target >= 1000).sum() != 0 or (target < 0).sum() != 0:
-                print(target)
-            loss = loss_fn(output, target)
-            functional.reset_net(model)
-
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
 
             if args.distributed:
@@ -1534,6 +1527,11 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix="")
             losses_m.update(reduced_loss.item(), input.size(0))
             top1_m.update(acc1.item(), output.size(0))
             top5_m.update(acc5.item(), output.size(0))
+            loop.set_postfix({
+                "loss": f"{losses_m.avg:.4f}",
+                "top1": f"{top1_m.avg:.2f}",
+                "top5": f"{top5_m.avg:.2f}"
+            })
 
             batch_time_m.update(time.time() - end)
             end = time.time()
