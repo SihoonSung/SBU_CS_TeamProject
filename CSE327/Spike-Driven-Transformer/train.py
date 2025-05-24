@@ -1,4 +1,8 @@
 import argparse
+from tqdm import tqdm
+import sys
+sys.path.append("./conf")
+from movie_dataset import SpikeDataset
 import time
 import yaml
 import os
@@ -14,7 +18,6 @@ import torch
 import torch.nn as nn
 import torchvision.utils
 import torchvision.transforms as transforms
-from torch.nn.parallel import DistributedDataParallel as NativeDDP
 import torchinfo
 from timm.data import (
     create_dataset,
@@ -29,7 +32,6 @@ from timm.models import (
     safe_model_name,
     resume_checkpoint,
     load_checkpoint,
-    convert_splitbn_model,
     model_parameters,
 )
 from timm.models.helpers import clean_state_dict
@@ -42,24 +44,18 @@ from timm.loss import (
 )
 from timm.optim import create_optimizer_v2, optimizer_kwargs
 from timm.scheduler import create_scheduler
-from timm.utils import ApexScaler, NativeScaler
 import model, dvs_utils, criterion
 
-try:
-    from apex import amp
-    from apex.parallel import DistributedDataParallel as ApexDDP
-    from apex.parallel import convert_syncbn_model
+from sklearn.model_selection import train_test_split
+from torch.utils.data import Subset
+from torch.utils.data import DataLoader
 
-    has_apex = True
-except ImportError:
-    has_apex = False
-
-has_native_amp = False
-try:
-    if getattr(torch.cuda.amp, "autocast") is not None:
-        has_native_amp = True
-except AttributeError:
-    pass
+def split_to_train_test_set(dataset, test_ratio=0.2):
+    indices = list(range(len(dataset)))
+    train_indices, test_indices = train_test_split(indices, test_size=test_ratio, random_state=42)
+    train_dataset = Subset(dataset, train_indices)
+    test_dataset = Subset(dataset, test_indices)
+    return train_dataset, test_dataset
 
 try:
     import wandb
@@ -111,8 +107,6 @@ def resume_checkpoint(
         _logger.error("No checkpoint found at '{}'".format(checkpoint_path))
         raise FileNotFoundError()
 
-
-torch.backends.cudnn.benchmark = True
 # The first arg parser parses out only the --config argument, this argument is used to
 # load a yaml file containing key-values that override the defaults for the main parser below
 config_parser = parser = argparse.ArgumentParser(
@@ -904,49 +898,18 @@ def main():
     args.distributed = False
     if "WORLD_SIZE" in os.environ:
         args.distributed = int(os.environ["WORLD_SIZE"]) > 1
-    args.device = "cuda:1"
     args.world_size = 1
     args.rank = 0  # global rank
-    if args.distributed:
-        args.device = "cuda:%d" % args.local_rank
-        torch.cuda.set_device(args.local_rank)
-        torch.distributed.init_process_group(backend="nccl", init_method="env://")
-        args.world_size = torch.distributed.get_world_size()
-        args.rank = torch.distributed.get_rank()
-        _logger.info(
-            "Training in distributed mode with multiple processes, 1 GPU per process. Process %d, total %d."
-            % (args.rank, args.world_size)
-        )
-    else:
-        _logger.info("Training with a single process on 1 GPUs.")
+    _logger.info("Training in single-process CPU-only mode.")
     assert args.rank >= 0
-
-    # resolve AMP arguments based on PyTorch / Apex availability
-    use_amp = None
-    if args.amp:
-        # `--amp` chooses native amp before apex (APEX ver not actively maintained)
-        if has_native_amp:
-            args.native_amp = True
-        elif has_apex:
-            args.apex_amp = True
-    if args.apex_amp and has_apex:
-        use_amp = "apex"
-    elif args.native_amp and has_native_amp:
-        use_amp = "native"
-    elif args.apex_amp or args.native_amp:
-        _logger.warning(
-            "Neither APEX or native Torch AMP is available, using float32. "
-            "Install NVIDA apex or upgrade to PyTorch 1.6"
-        )
 
     torch.backends.cudnn.benchmark = True
     os.environ["PYTHONHASHSEED"] = str(args.seed)
     np.random.seed(args.seed)
     torch.initial_seed()  # dataloader multi processing
     torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
-    random_seed(args.seed, args.rank)
+    # torch.cuda.manual_seed(args.seed)
+    # torch.cuda.manual_seed_all(args.seed)
 
     args.dvs_mode = False
     if args.dataset in ["cifar10-dvs-tet", "cifar10-dvs"]:
@@ -977,13 +940,8 @@ def main():
     )
     if args.local_rank == 0:
         _logger.info(f"Creating model {args.model}")
-        _logger.info(
-            str(
-                torchinfo.summary(
-                    model, (2, args.in_channels, args.img_size, args.img_size)
-                )
-            )
-        )
+        dummy_input = torch.randn(args.time_steps, 2, args.in_channels)
+        torchinfo.summary(model, input_data=dummy_input)
 
     if args.num_classes is None:
         assert hasattr(
@@ -1034,50 +992,18 @@ def main():
     # enable split bn (separate bn stats per batch-portion)
     if args.split_bn:
         assert num_aug_splits > 1 or args.resplit
-        model = convert_splitbn_model(model, max(num_aug_splits, 2))
 
     # move model to GPU, enable channels last layout if set
-    model.cuda()
+    model.to("cpu")
     if args.channels_last:
         model = model.to(memory_format=torch.channels_last)
 
-    # setup synchronized BatchNorm for distributed training
-    if args.distributed and args.sync_bn:
-        assert not args.split_bn
-        if has_apex and use_amp != "native":
-            # Apex SyncBN preferred unless native amp is activated
-            model = convert_syncbn_model(model)
-        else:
-            model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
-        if args.local_rank == 0:
-            _logger.info(
-                "Converted model to use Synchronized BatchNorm. WARNING: You may have issues if using "
-                "zero initialized BN layers (enabled by default for ResNets) while sync-bn enabled."
-            )
-
-    if args.torchscript:
-        assert not use_amp == "apex", "Cannot use APEX AMP with torchscripted model"
-        assert not args.sync_bn, "Cannot use SyncBatchNorm with torchscripted model"
-        model = torch.jit.script(model)
 
     optimizer = create_optimizer_v2(model, **optimizer_kwargs(cfg=args))
 
     # setup automatic mixed-precision (AMP) loss scaling and op casting
     amp_autocast = suppress  # do nothing
     loss_scaler = None
-    if use_amp == "apex":
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
-        loss_scaler = ApexScaler()
-        if args.local_rank == 0:
-            _logger.info("Using NVIDIA APEX AMP. Training in mixed precision.")
-    elif use_amp == "native":
-        amp_autocast = torch.cuda.amp.autocast
-        loss_scaler = NativeScaler()
-        if args.local_rank == 0:
-            _logger.info("Using native Torch AMP. Training in mixed precision.")
-    else:
-        if args.local_rank == 0:
-            _logger.info("AMP not enabled. Training in float32.")
 
     # optionally resume from a checkpoint
     resume_epoch = None
@@ -1101,21 +1027,6 @@ def main():
         )
         if args.resume:
             load_checkpoint(model_ema.module, args.resume, use_ema=True)
-
-    # setup distributed training
-    if args.distributed:
-        if has_apex and use_amp != "native":
-            # Apex DDP preferred unless native amp is activated
-            if args.local_rank == 0:
-                _logger.info("Using NVIDIA APEX DistributedDataParallel.")
-            model = ApexDDP(model, delay_allreduce=True, find_unused_parameters=True)
-        else:
-            if args.local_rank == 0:
-                _logger.info("Using native Torch DistributedDataParallel.")
-            model = NativeDDP(
-                model, device_ids=[args.local_rank], find_unused_parameters=True
-            )  # can use device str in Torch >= 1.1
-        # NOTE: EMA model does not need to be wrapped by DDP
 
     # for linear prob
     if args.linear_prob:
@@ -1143,7 +1054,24 @@ def main():
 
     # create the train and eval datasets
     dataset_train, dataset_eval = None, None
-    if args.dataset == "cifar10-dvs-tet":
+    if args.dataset == "movie":
+        dataset = SpikeDataset(csv_path="./conf/movie_dataset/spike_encoded_dataset.csv")
+        dataset_train, dataset_eval = split_to_train_test_set(dataset)
+        loader_train = DataLoader(
+            dataset_train,
+            batch_size=args.batch_size,
+            shuffle=True,
+            num_workers=args.workers,
+            pin_memory=args.pin_mem,
+        )
+        loader_eval = DataLoader(
+            dataset_eval,
+            batch_size=args.val_batch_size,
+            shuffle=False,
+            num_workers=args.workers,
+            pin_memory=args.pin_mem,
+        )
+    elif args.dataset == "cifar10-dvs-tet":
         dataset_train = dvs_utils.DVSCifar10(
             root=os.path.join(args.data_dir, "train"),
             train=True,
@@ -1236,7 +1164,6 @@ def main():
     if args.no_aug or not train_interpolation:
         train_interpolation = data_config["interpolation"]
 
-    loader_train, loader_eval, train_idx = None, None, None
     # NOTE(hujiakui): only for ImageNet
     if args.train_split_path is not None:
         train_idx = np.load(args.train_split_path).tolist()
@@ -1256,51 +1183,6 @@ def main():
             num_workers=args.workers,
             pin_memory=True,
         )
-    else:
-        loader_train = create_loader(
-            dataset_train,
-            input_size=data_config["input_size"],
-            batch_size=args.batch_size,
-            is_training=True,
-            use_prefetcher=args.prefetcher,
-            no_aug=args.no_aug,
-            re_prob=args.reprob,
-            re_mode=args.remode,
-            re_count=args.recount,
-            re_split=args.resplit,
-            scale=args.scale,
-            ratio=args.ratio,
-            hflip=args.hflip,
-            vflip=args.vflip,
-            color_jitter=args.color_jitter,
-            auto_augment=args.aa,
-            num_aug_splits=num_aug_splits,
-            interpolation=train_interpolation,
-            mean=data_config["mean"],
-            std=data_config["std"],
-            num_workers=args.workers,
-            distributed=args.distributed,
-            collate_fn=collate_fn,
-            pin_memory=args.pin_mem,
-            use_multi_epochs_loader=args.use_multi_epochs_loader,
-            # train_idx=train_idx,
-        )
-        # NOTE(hujiakui): train_idx should modify the code of timm
-
-        loader_eval = create_loader(
-            dataset_eval,
-            input_size=data_config["input_size"],
-            batch_size=args.val_batch_size,
-            is_training=False,
-            use_prefetcher=args.prefetcher,
-            interpolation=data_config["interpolation"],
-            mean=data_config["mean"],
-            std=data_config["std"],
-            num_workers=args.workers,
-            distributed=args.distributed,
-            crop_pct=data_config["crop_pct"],
-            pin_memory=args.pin_mem,
-        )
     if args.local_rank == 0:
         _logger.info("Create dataloader: {}".format(args.dataset))
 
@@ -1309,7 +1191,7 @@ def main():
         assert num_aug_splits > 1  # JSD only valid with aug splits set
         train_loss_fn = JsdCrossEntropy(
             num_splits=num_aug_splits, smoothing=args.smoothing
-        ).cuda()
+        ).to("cpu")
     elif mixup_active:
         # smoothing is handled with mixup target transform
         if args.bce_loss:
@@ -1326,8 +1208,8 @@ def main():
     else:
         train_loss_fn = nn.CrossEntropyLoss()
 
-    train_loss_fn = train_loss_fn.cuda()
-    validate_loss_fn = nn.CrossEntropyLoss().cuda()
+    train_loss_fn = train_loss_fn.to("cpu")
+    validate_loss_fn = nn.CrossEntropyLoss().to("cpu")
 
     # setup checkpoint saver and eval metric tracking
     eval_metric = args.eval_metric
@@ -1465,39 +1347,48 @@ def train_one_epoch(
     end = time.time()
     last_idx = len(loader) - 1
     num_updates = epoch * len(loader)
+    loop = tqdm(enumerate(loader), total=len(loader), desc=f"Epoch {epoch}")
     for batch_idx, (input, target) in enumerate(loader):
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)
-        input = input.float()
-        if not args.prefetcher or args.dataset in dvs_utils.DVS_DATASET:
-            if args.amp and not isinstance(input, torch.cuda.HalfTensor):
-                input = input.half()
-            input, target = input.cuda(), target.cuda()
-            if dvs_aug is not None:
-                input = dvs_aug(input)
-            if dvs_trival_aug is not None:
-                output = []
-                for i in range(input.shape[0]):
-                    output.append(dvs_trival_aug(input[i]))
-                input = torch.stack(output)
-                del output
-            if mixup_fn is not None:
-                input, target = mixup_fn(input, target)
+        input = input.to("cpu").float()  # shape: [B, T, C]
+        input = input.unsqueeze(3).unsqueeze(4)  # shape: [B, T, C, 1, 1]
+        
+        if dvs_aug is not None:
+            input = dvs_aug(input)
+        if dvs_trival_aug is not None:
+            output = []
+            for i in range(input.shape[0]):
+                output.append(dvs_trival_aug(input[i]))
+            input = torch.stack(output)
+            del output
+        if mixup_fn is not None:
+            input, target = mixup_fn(input, target)
 
         if args.channels_last:
             input = input.contiguous(memory_format=torch.channels_last)
 
         with amp_autocast():
+            output = model(input)[0]  # shape: [B, T, C]
             output = model(input)[0]
+            target = target.to("cpu").long()
+
             if args.TET:
                 loss = criterion.TET_loss(
                     output, target, loss_fn, means=args.TET_means, lamb=args.TET_lamb
                 )
             else:
-                loss = loss_fn(output, target)
-        sample_number += input.shape[0]
-        if not args.distributed:
-            losses_m.update(loss.item(), input.size(0))
+                if output.ndim == 3:
+                    B, T, C = output.shape
+                    output = output.view(B * T, C)
+                    target = target.unsqueeze(1).expand(-1, T).reshape(-1)
+                elif output.ndim == 2:
+                    # output = [B, C]인 경우
+                    pass
+                else:
+                    raise ValueError(f"Unexpected output shape: {output.shape}")
+
+        loss = loss_fn(output, target)
 
         optimizer.zero_grad()
         if loss_scaler is not None:
@@ -1527,7 +1418,6 @@ def train_one_epoch(
             model_ema.update(model)
             functional.reset_net(model_ema)
 
-        torch.cuda.synchronize()
         num_updates += 1
         batch_time_m.update(time.time() - end)
         if last_batch or batch_idx % args.log_interval == 0:
@@ -1539,25 +1429,11 @@ def train_one_epoch(
                 losses_m.update(reduced_loss.item(), input.size(0))
 
             if args.local_rank == 0:
-                _logger.info(
-                    "Train: {} [{:>4d}/{} ({:>3.0f}%)]  "
-                    "Loss: {loss.val:>9.6f} ({loss.avg:>6.4f})  "
-                    "Time: {batch_time.val:.3f}s, {rate:>7.2f}/s  "
-                    "({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s)  "
-                    "LR: {lr:.3e}  "
-                    "Data: {data_time.val:.3f} ({data_time.avg:.3f})".format(
-                        epoch,
-                        batch_idx,
-                        len(loader),
-                        100.0 * batch_idx / last_idx,
-                        loss=losses_m,
-                        batch_time=batch_time_m,
-                        rate=input.size(0) * args.world_size / batch_time_m.val,
-                        rate_avg=input.size(0) * args.world_size / batch_time_m.avg,
-                        lr=lr,
-                        data_time=data_time_m,
-                    )
-                )
+                loop.set_postfix({
+                    "loss": f"{losses_m.avg:.4f}",
+                    "lr": f"{lr:.2e}",
+                    "batch_time": f"{batch_time_m.avg:.3f}s"
+                })
 
                 if args.save_images and output_dir:
                     torchvision.utils.save_image(
@@ -1600,31 +1476,46 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix="")
     last_idx = len(loader) - 1
     with torch.no_grad():
         for batch_idx, (input, target) in enumerate(loader):
-            input = input.float()
+            input = input.to("cpu").float()
             if (target >= 1000).sum() != 0 or (target < 0).sum() != 0:
                 print(target)
 
             last_batch = batch_idx == last_idx
             if not args.prefetcher or args.dataset in dvs_utils.DVS_DATASET:
-                if args.amp and not isinstance(input, torch.cuda.HalfTensor):
-                    input = input.half()
-                input = input.cuda()
-                target = target.cuda()
+                input = input.to("cpu")
+                
             if args.channels_last:
                 input = input.contiguous(memory_format=torch.channels_last)
 
             with amp_autocast():
                 output = model(input)
-            if isinstance(output, (tuple, list)):
-                output = output[0]
-            if args.TET:
-                output = output.mean(0)
+                if isinstance(output, (tuple, list)):
+                    output = output[0]
 
-            # augmentation reduction
-            reduce_factor = args.tta
-            if reduce_factor > 1:
-                output = output.unfold(0, reduce_factor, reduce_factor).mean(dim=2)
-                target = target[0 : target.size(0) : reduce_factor]
+                target = target.to("cpu").long()
+
+                if args.TET:
+                    loss = criterion.TET_loss(
+                        output, target, loss_fn, means=args.TET_means, lamb=args.TET_lamb
+                    )
+                else:
+                    if output.ndim == 3:
+                        # output: [B, T, C], target: [B, T]
+                        B, T, C = output.shape
+                        output = output.view(B * T, C)
+                        target = target.unsqueeze(1).expand(-1, T).reshape(-1)
+                    elif output.ndim == 2:
+                        # output: [B, C], target: [B]
+                        pass
+                    else:
+                        raise ValueError(f"Unexpected output shape: {output.shape}")
+                    loss = loss_fn(output, target)
+                    
+        # augmentation reduction (only applies after flattening)
+        reduce_factor = args.tta
+        if reduce_factor > 1:
+            output = output.unfold(0, reduce_factor, reduce_factor).mean(dim=2)
+            target = target[0 : target.size(0) : reduce_factor]
 
             if (target >= 1000).sum() != 0 or (target < 0).sum() != 0:
                 print(target)
@@ -1639,8 +1530,6 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix="")
                 acc5 = reduce_tensor(acc5, args.world_size)
             else:
                 reduced_loss = loss.data
-
-            torch.cuda.synchronize()
 
             losses_m.update(reduced_loss.item(), input.size(0))
             top1_m.update(acc1.item(), output.size(0))

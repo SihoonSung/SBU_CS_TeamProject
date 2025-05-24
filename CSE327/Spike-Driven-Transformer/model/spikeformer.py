@@ -11,6 +11,30 @@ from spikingjelly.clock_driven.neuron import (
 )
 from module import *
 
+class PatchEmbed(nn.Module):
+    def forward(self, x, hook=None):
+        if x.dim() == 3:  # [B, T, C]
+            x = x.permute(1, 0, 2).unsqueeze(-1).unsqueeze(-1)  # → [T, B, C, 1, 1]
+        elif x.dim() == 5:
+            if x.shape[0] == self.T:  # [T, B, C, 1, 1]
+                pass
+            elif x.shape[1] == self.T:  # [B, T, C, 1, 1]
+                x = x.permute(1, 0, 2, 3, 4)  # → [T, B, C, 1, 1]
+            else:
+                raise ValueError(f"Unrecognized 5D input shape {x.shape}")
+        else:
+            raise ValueError(f"Unsupported input shape {x.shape}")
+
+        x, hook = self.forward_features(x, hook=hook)  # x: [T, B, C]
+        x = self.head_lif(x)  # apply spiking activation: [T, B, C]
+        if hook is not None:
+            hook["head_lif"] = x.detach()
+
+        x = self.head(x)  # Linear layer: [T, B, num_classes]
+        if not self.TET:
+            x = x.mean(0)  # → [B, num_classes]
+
+        return x, hook
 
 class SpikeDrivenTransformer(nn.Module):
     def __init__(
@@ -41,6 +65,7 @@ class SpikeDrivenTransformer(nn.Module):
         cml=False,
         pretrained=False,
         pretrained_cfg=None,
+        **kwargs,
     ):
         super().__init__()
         self.num_classes = num_classes
@@ -54,15 +79,7 @@ class SpikeDrivenTransformer(nn.Module):
             x.item() for x in torch.linspace(0, drop_path_rate, depths)
         ]  # stochastic depth decay rule
 
-        patch_embed = MS_SPS(
-            img_size_h=img_size_h,
-            img_size_w=img_size_w,
-            patch_size=patch_size,
-            in_channels=in_channels,
-            embed_dims=embed_dims,
-            pooling_stat=pooling_stat,
-            spike_mode=spike_mode,
-        )
+        self.patch_embed = PatchEmbed()
 
         blocks = nn.ModuleList(
             [
@@ -86,15 +103,14 @@ class SpikeDrivenTransformer(nn.Module):
             ]
         )
 
-        setattr(self, f"patch_embed", patch_embed)
         setattr(self, f"block", blocks)
 
         # classification head
         if spike_mode in ["lif", "alif", "blif"]:
-            self.head_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.head_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.head_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
         self.head = (
             nn.Linear(embed_dims, num_classes) if num_classes > 0 else nn.Identity()
@@ -111,21 +127,19 @@ class SpikeDrivenTransformer(nn.Module):
             nn.init.constant_(m.weight, 1.0)
 
     def forward_features(self, x, hook=None):
-        block = getattr(self, f"block")
-        patch_embed = getattr(self, f"patch_embed")
-
-        x, _, hook = patch_embed(x, hook=hook)
+        block = self.block
         for blk in block:
             x, _, hook = blk(x, hook=hook)
-
-        x = x.flatten(3).mean(3)
+        x = x.flatten(3).mean(3)  
         return x, hook
 
     def forward(self, x, hook=None):
-        if len(x.shape) < 5:
-            x = (x.unsqueeze(0)).repeat(self.T, 1, 1, 1, 1)
-        else:
-            x = x.transpose(0, 1).contiguous()
+        if x.dim() == 3:  # [B, T, C]
+            x = x.permute(1, 0, 2).unsqueeze(-1).unsqueeze(-1)
+        elif x.dim() == 5:  # already in [T, B, C, 1, 1]
+            x = x.permute(1, 0, 2, 3, 4)
+        elif x.dim() != 5 or x.shape[0] != self.T:
+            raise ValueError(f"Unsupported input shape {x.shape}")
 
         x, hook = self.forward_features(x, hook=hook)
         x = self.head_lif(x)

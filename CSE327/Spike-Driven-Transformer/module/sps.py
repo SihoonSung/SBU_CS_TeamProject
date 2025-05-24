@@ -35,10 +35,10 @@ class MS_SPS(nn.Module):
         )
         self.proj_bn = nn.BatchNorm2d(embed_dims // 8)
         if spike_mode == "lif":
-            self.proj_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.proj_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.proj_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
         self.maxpool = nn.MaxPool2d(
             kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False
@@ -55,11 +55,11 @@ class MS_SPS(nn.Module):
         self.proj_bn1 = nn.BatchNorm2d(embed_dims // 4)
         if spike_mode == "lif":
             self.proj_lif1 = MultiStepLIFNode(
-                tau=2.0, detach_reset=True, backend="cupy"
+                tau=2.0, detach_reset=True, backend="torch"
             )
         elif spike_mode == "plif":
             self.proj_lif1 = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
         self.maxpool1 = nn.MaxPool2d(
             kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False
@@ -76,11 +76,11 @@ class MS_SPS(nn.Module):
         self.proj_bn2 = nn.BatchNorm2d(embed_dims // 2)
         if spike_mode == "lif":
             self.proj_lif2 = MultiStepLIFNode(
-                tau=2.0, detach_reset=True, backend="cupy"
+                tau=2.0, detach_reset=True, backend="torch"
             )
         elif spike_mode == "plif":
             self.proj_lif2 = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
         self.maxpool2 = nn.MaxPool2d(
             kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False
@@ -92,11 +92,11 @@ class MS_SPS(nn.Module):
         self.proj_bn3 = nn.BatchNorm2d(embed_dims)
         if spike_mode == "lif":
             self.proj_lif3 = MultiStepLIFNode(
-                tau=2.0, detach_reset=True, backend="cupy"
+                tau=2.0, detach_reset=True, backend="torch"
             )
         elif spike_mode == "plif":
             self.proj_lif3 = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
         self.maxpool3 = nn.MaxPool2d(
             kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False
@@ -107,10 +107,10 @@ class MS_SPS(nn.Module):
         )
         self.rpe_bn = nn.BatchNorm2d(embed_dims)
         if spike_mode == "lif":
-            self.rpe_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.rpe_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.rpe_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
 
     def forward(self, x, hook=None):

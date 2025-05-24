@@ -838,22 +838,22 @@ def main():
     args.distributed = False
     if "WORLD_SIZE" in os.environ:
         args.distributed = int(os.environ["WORLD_SIZE"]) > 1
-    args.device = "cuda:1"
+    args.device = "cpu"
     args.world_size = 1
     args.rank = 0  # global rank
-    if args.distributed:
-        args.device = "cuda:%d" % args.local_rank
-        torch.cuda.set_device(args.local_rank)
-        torch.distributed.init_process_group(backend="nccl", init_method="env://")
-        args.world_size = torch.distributed.get_world_size()
-        args.rank = torch.distributed.get_rank()
-        _logger.info(
-            "Training in distributed mode with multiple processes, 1 GPU per process. Process %d, total %d."
-            % (args.rank, args.world_size)
-        )
-    else:
-        _logger.info("Training with a single process on 1 GPUs.")
-    assert args.rank >= 0
+    # if args.distributed:
+    #     args.device = "cuda:%d" % args.local_rank
+    #     torch.cuda.set_device(args.local_rank)
+    #     torch.distributed.init_process_group(backend="nccl", init_method="env://")
+    #     args.world_size = torch.distributed.get_world_size()
+    #     args.rank = torch.distributed.get_rank()
+    #     _logger.info(
+    #         "Training in distributed mode with multiple processes, 1 GPU per process. Process %d, total %d."
+    #         % (args.rank, args.world_size)
+    #     )
+    # else:
+    #     _logger.info("Training with a single process on 1 GPUs.")
+    # assert args.rank >= 0
 
     # resolve AMP arguments based on PyTorch / Apex availability
     use_amp = None
@@ -878,8 +878,8 @@ def main():
     np.random.seed(args.seed)
     torch.initial_seed()  # dataloader multi processing
     torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
+    # torch.cuda.manual_seed(args.seed)
+    # torch.cuda.manual_seed_all(args.seed)
     random_seed(args.seed, args.rank)
 
     args.dvs_mode = False
@@ -943,7 +943,7 @@ def main():
         model = convert_splitbn_model(model, max(num_aug_splits, 2))
 
     # move model to GPU, enable channels last layout if set
-    model.cuda()
+    model = model.to("cpu")
     if args.channels_last:
         model = model.to(memory_format=torch.channels_last)
 
@@ -975,7 +975,8 @@ def main():
         if args.local_rank == 0:
             _logger.info("Using NVIDIA APEX AMP. Training in mixed precision.")
     elif use_amp == "native":
-        amp_autocast = torch.cuda.amp.autocast
+        # amp_autocast = torch.cuda.amp.autocast
+        amp_autocast = suppress
         loss_scaler = NativeScaler()
         if args.local_rank == 0:
             _logger.info("Using native Torch AMP. Training in mixed precision.")
@@ -1095,7 +1096,7 @@ def main():
             pin_memory=args.pin_mem,
         )
 
-    validate_loss_fn = nn.CrossEntropyLoss().cuda()
+    validate_loss_fn = nn.CrossEntropyLoss()
 
     # setup checkpoint saver and eval metric tracking
     if args.experiment:
@@ -1190,8 +1191,8 @@ def validate(
         for batch_idx, (input, target) in enumerate(loader):
             last_batch = batch_idx == last_idx
             if not args.prefetcher:
-                input = input.cuda()
-            target = target.cuda()
+                input = input.to("cpu")
+            target = target.to("cpu")
             if args.channels_last:
                 input = input.contiguous(memory_format=torch.channels_last)
 
@@ -1230,7 +1231,7 @@ def validate(
             else:
                 reduced_loss = loss.data
 
-            torch.cuda.synchronize()
+            # torch.cuda.synchronize()
 
             losses_m.update(reduced_loss.item(), input.size(0))
             top1_m.update(acc1.item(), output.size(0))

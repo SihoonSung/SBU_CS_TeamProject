@@ -34,10 +34,10 @@ class MS_MLP_Conv(nn.Module):
         self.fc1_conv = nn.Conv2d(in_features, hidden_features, kernel_size=1, stride=1)
         self.fc1_bn = nn.BatchNorm2d(hidden_features)
         if spike_mode == "lif":
-            self.fc1_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.fc1_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.fc1_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
 
         self.fc2_conv = nn.Conv2d(
@@ -45,10 +45,10 @@ class MS_MLP_Conv(nn.Module):
         )
         self.fc2_bn = nn.BatchNorm2d(out_features)
         if spike_mode == "lif":
-            self.fc2_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.fc2_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.fc2_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
 
         self.c_hidden = hidden_features
@@ -105,37 +105,37 @@ class MS_SSA_Conv(nn.Module):
         self.q_conv = nn.Conv2d(dim, dim, kernel_size=1, stride=1, bias=False)
         self.q_bn = nn.BatchNorm2d(dim)
         if spike_mode == "lif":
-            self.q_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.q_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.q_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
 
         self.k_conv = nn.Conv2d(dim, dim, kernel_size=1, stride=1, bias=False)
         self.k_bn = nn.BatchNorm2d(dim)
         if spike_mode == "lif":
-            self.k_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.k_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.k_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
 
         self.v_conv = nn.Conv2d(dim, dim, kernel_size=1, stride=1, bias=False)
         self.v_bn = nn.BatchNorm2d(dim)
         if spike_mode == "lif":
-            self.v_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="cupy")
+            self.v_lif = MultiStepLIFNode(tau=2.0, detach_reset=True, backend="torch")
         elif spike_mode == "plif":
             self.v_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
 
         if spike_mode == "lif":
             self.attn_lif = MultiStepLIFNode(
-                tau=2.0, v_threshold=0.5, detach_reset=True, backend="cupy"
+                tau=2.0, v_threshold=0.5, detach_reset=True, backend="torch"
             )
         elif spike_mode == "plif":
             self.attn_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, v_threshold=0.5, detach_reset=True, backend="cupy"
+                init_tau=2.0, v_threshold=0.5, detach_reset=True, backend="torch"
             )
 
         self.talking_heads = nn.Conv1d(
@@ -143,11 +143,11 @@ class MS_SSA_Conv(nn.Module):
         )
         if spike_mode == "lif":
             self.talking_heads_lif = MultiStepLIFNode(
-                tau=2.0, v_threshold=0.5, detach_reset=True, backend="cupy"
+                tau=2.0, v_threshold=0.5, detach_reset=True, backend="torch"
             )
         elif spike_mode == "plif":
             self.talking_heads_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, v_threshold=0.5, detach_reset=True, backend="cupy"
+                init_tau=2.0, v_threshold=0.5, detach_reset=True, backend="torch"
             )
 
         self.proj_conv = nn.Conv2d(dim, dim, kernel_size=1, stride=1)
@@ -155,11 +155,11 @@ class MS_SSA_Conv(nn.Module):
 
         if spike_mode == "lif":
             self.shortcut_lif = MultiStepLIFNode(
-                tau=2.0, detach_reset=True, backend="cupy"
+                tau=2.0, detach_reset=True, backend="torch"
             )
         elif spike_mode == "plif":
             self.shortcut_lif = MultiStepParametricLIFNode(
-                init_tau=2.0, detach_reset=True, backend="cupy"
+                init_tau=2.0, detach_reset=True, backend="torch"
             )
 
         self.mode = mode

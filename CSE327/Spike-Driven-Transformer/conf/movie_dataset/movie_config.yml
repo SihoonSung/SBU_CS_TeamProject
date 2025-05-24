@@ -1,16 +1,16 @@
 # movie_config.yml
 
-dataset: movie_dataset
+dataset: movie
 csv_path: /Users/minguhwang/Documents/GitHub/SBU_CS_TeamProject/CSE327/Finalproject/spike_encoded_dataset.csv
-
-num_classes: 28
+img_size: 16
+in_channels: 128
 time_steps: 10
-features: 128
+num_classes: 25
+dim: 128
 
 batch_size: 64
 val_batch_size: 64
-epochs: 100
-img_size: 1
+epochs: 1
 
 lr: 0.001
 opt: adamw
