@@ -10,7 +10,8 @@ dim: 128
 
 batch_size: 64
 val_batch_size: 64
-epochs: 1
+epochs: 100
+cooldown_epochs: 0
 
 lr: 0.001
 opt: adamw

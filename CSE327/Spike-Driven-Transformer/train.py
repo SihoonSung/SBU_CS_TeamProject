@@ -11,6 +11,7 @@ import numpy as np
 from collections import OrderedDict
 from contextlib import suppress
 from datetime import datetime
+import matplotlib.pyplot as plt
 from spikingjelly.clock_driven import functional
 from spikingjelly.datasets.cifar10_dvs import CIFAR10DVS
 from spikingjelly.datasets.dvs128_gesture import DVS128Gesture
@@ -19,6 +20,10 @@ import torch.nn as nn
 import torchvision.utils
 import torchvision.transforms as transforms
 import torchinfo
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+from timm.models import clean_state_dict
+from timm.layers import trunc_normal_
 from timm.data import (
     create_dataset,
     create_loader,
@@ -34,7 +39,6 @@ from timm.models import (
     load_checkpoint,
     model_parameters,
 )
-from timm.models.helpers import clean_state_dict
 from timm.utils import *
 from timm.utils import accuracy, reduce_tensor
 from timm.loss import (
@@ -1232,6 +1236,8 @@ def main():
         )
         with open(os.path.join(output_dir, "args.yaml"), "w") as f:
             f.write(args_text)
+    
+    acc_list = []
 
     try:
         for epoch in range(start_epoch, num_epochs):
@@ -1266,6 +1272,8 @@ def main():
             eval_metrics = validate(
                 model, loader_eval, validate_loss_fn, args, amp_autocast=amp_autocast
             )
+
+            acc_list.append(eval_metrics["top1"])
 
             if model_ema is not None and not args.model_ema_force_cpu:
                 if args.distributed and args.dist_bn in ("broadcast", "reduce"):
@@ -1308,6 +1316,31 @@ def main():
         pass
     if best_metric is not None:
         _logger.info("*** Best metric: {0} (epoch {1})".format(best_metric, best_epoch))
+    if args.local_rank == 0 and acc_list:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.plot(range(start_epoch, start_epoch + len(acc_list)), acc_list, marker="o", label="Top-1 Accuracy")
+        for i, acc in enumerate(acc_list):
+            epoch = start_epoch + i
+            if epoch % 5 == 0:
+                plt.annotate(
+                    f"{acc:.2f}%", (epoch, acc),
+                    textcoords="offset points",
+                    xytext=(0, 5),  # 위로 살짝 띄우기
+                    ha='center',
+                    fontsize=8,
+                    color="blue"
+                )
+        plt.title("Validation Accuracy per Epoch")
+        plt.xlabel("Epoch")
+        plt.ylabel("Top-1 Accuracy (%)")
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        acc_plot_path = os.path.join(output_dir, "accuracy_plot.png")
+        plt.savefig(acc_plot_path)
+        _logger.info(f"Accuracy plot saved to: {acc_plot_path}")
+        _logger.info("*** Best Accuracy: {:.2f}% (epoch {})".format(best_metric, best_epoch))
 
 
 def train_one_epoch(
