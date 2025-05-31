@@ -229,6 +229,54 @@ app.get("/api/posts/:id/comments", async (req, res) => {
     }
 });
 
+const players = [
+    {
+        name: "Kim Kwanghyun", position: "P", uniform: 54, innings: 130, wins: 12, saves: 0, holds: 0, era: 2.45,
+        defensiveScore: 0, battingScore: 0, plateAppearances: 0, atBats: 0, primaryPosition: "P"
+    },
+    {
+        name: "Chae Eunseong", position: "1B", uniform: 95, defensiveInnings: 900, defensiveScore: 60, battingScore: 80,
+        plateAppearances: 480, atBats: 420, primaryPosition: "1B"
+    },
+    {
+        name: "Park Byungho", position: "DH", uniform: 52, defensiveInnings: 0, battingScore: 85, plateAppearances: 350,
+        atBats: 300, primaryPosition: "DH"
+    },
+    {
+        name: "Kim Hyunsu", position: "LF", uniform: 47, defensiveInnings: 800, defensiveScore: 50, battingScore: 75,
+        plateAppearances: 460, atBats: 410, primaryPosition: "LF"
+    },
+    {
+        name: "Kim Hyunsu", position: "CF", uniform: 47, defensiveInnings: 800, defensiveScore: 50, battingScore: 75,
+        plateAppearances: 460, atBats: 410, primaryPosition: "CF"
+    },
+    {
+        name: "Kim Hyunsu", position: "RF", uniform: 47, defensiveInnings: 800, defensiveScore: 50, battingScore: 75,
+        plateAppearances: 460, atBats: 410, primaryPosition: "RF"
+    },
+    {
+        name: "Kim Hyunsu", position: "2B", uniform: 47, defensiveInnings: 800, defensiveScore: 50, battingScore: 75,
+        plateAppearances: 460, atBats: 410, primaryPosition: "2B"
+    },
+    {
+        name: "Kim Hyunsu", position: "3B", uniform: 47, defensiveInnings: 800, defensiveScore: 50, battingScore: 75,
+        plateAppearances: 460, atBats: 410, primaryPosition: "3B"
+    },
+    {
+        name: "Kim Hyunsu", position: "SS", uniform: 47, defensiveInnings: 800, defensiveScore: 50, battingScore: 75,
+        plateAppearances: 460, atBats: 410, primaryPosition: "SS"
+    },
+    {
+        name: "Kim Hyunsu", position: "C", uniform: 47, defensiveInnings: 800, defensiveScore: 50, battingScore: 75,
+        plateAppearances: 460, atBats: 410, primaryPosition: "C"
+    }
+
+];
+
+app.get('/api/players', (req, res) => {
+    res.json(players);
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
