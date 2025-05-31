@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './community.css';
 
 function Community({ loggedIn, userProfile }) {
@@ -6,6 +6,20 @@ function Community({ loggedIn, userProfile }) {
     const [posts, setPosts] = useState([]);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+
+    const fetchPosts = async () => {
+        try {
+            const response = await fetch("http://localhost:3001/api/posts");
+            const data = await response.json();
+            setPosts(data);
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchPosts();
+    }, []);
 
     const handleWriteClick = () => {
         setShowForm(true);
@@ -18,46 +32,60 @@ function Community({ loggedIn, userProfile }) {
     };
 
     const handleSubmit = async () => {
-    if (!loggedIn) {
-        alert("Please Login first.");
-        return;
-    }
-    if (!title.trim()) {
-        alert("Please enter a title.");
-        return;
-    }
-
-    try {
-        const response = await fetch("http://localhost:3001/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            title,
-            content,
-            author: userProfile?.username || "Anonymous",
-        }),
-        });
-
-        if (response.ok) {
-        fetchPosts();
-        setShowForm(false);
-        setTitle('');
-        setContent('');
-        } else {
-        alert("Failed to create post.");
+        if (!loggedIn) {
+            alert("Please Login first.");
+            return;
         }
-    } catch (error) {
-        console.error("Post error:", error);
-        alert("Server error.");
-    }
+        if (!title.trim()) {
+            alert("Please enter a title.");
+            return;
+        }
+
+        try {
+            const response = await fetch("http://localhost:3001/api/posts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                title,
+                content,
+                author: userProfile?.username || "Anonymous",
+            }),
+            });
+
+            if (response.ok) {
+            fetchPosts();
+            setShowForm(false);
+            setTitle('');
+            setContent('');
+            } else {
+            alert("Failed to create post.");
+            }
+        } catch (error) {
+            console.error("Post error:", error);
+            alert("Server error.");
+        }
     };
 
-    const handleDelete = (id, author) => {
-        if(author !== userProfile?.username){
+    const handleDelete = async (id, author) => {
+        if (author !== userProfile?.username) {
             alert("You cannot delete.");
             return;
         }
-        setPosts(posts.filter((post) => post.id !== id));
+
+        try {
+            const response = await fetch(`http://localhost:3001/api/posts/${id}`, {
+            method: "DELETE",
+            });
+
+            if (response.ok) {
+            fetchPosts(); // 서버에서 다시 받아와 반영
+            } else {
+            alert("Failed to delete post.");
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            alert("Server error.");
+        }
     };
 
     return (

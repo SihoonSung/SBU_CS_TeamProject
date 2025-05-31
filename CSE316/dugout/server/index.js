@@ -127,6 +127,20 @@ app.get("/api/posts", async (req, res) => {
     }
 });
 
+app.delete("/api/posts/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [result] = await pool.query("DELETE FROM posts WHERE id = ?", [id]);
+        if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Post not found." });
+        }
+        res.status(200).json({ message: "Post deleted." });
+    } catch (err) {
+        console.error("Delete error:", err);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
