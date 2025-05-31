@@ -6,7 +6,7 @@ function Community({ loggedIn, userProfile }) {
     const [posts, setPosts] = useState([]);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [comments, setComents] = useState({});
+    const [comments, setComments] = useState({});
     const [commentInputs, setCommentInputs] = useState({});
 
     const fetchPosts = async () => {
@@ -15,9 +15,24 @@ function Community({ loggedIn, userProfile }) {
             const response = await fetch("http://localhost:3001/api/posts");
             const data = await response.json();
             setPosts(data);
+            await fetchCommentsForAllPosts(data);
         } catch (error) {
             console.error("Fetch error:", error);
         }
+    };
+
+    const fetchCommentsForAllPosts = async (postList) => {
+        const allComments = {};
+        for (const post of postList) {
+            try {
+                const res = await fetch(`http://localhost:3001/api/posts/${post.id}/comments`);
+                const data = await res.json();
+                allComments[post.id] = data;
+            } catch (error) {
+                console.error(`Error fetching comments for post ${post.id}:`, error);
+            }
+        }
+        setComments(allComments);
     };
 
     useEffect(() => {
@@ -56,12 +71,12 @@ function Community({ loggedIn, userProfile }) {
             }),
             });
             if (response.ok) {
-            fetchPosts();
-            setShowForm(false);
-            setTitle('');
-            setContent('');
+                fetchPosts();
+                setShowForm(false);
+                setTitle('');
+                setContent('');
             } else {
-            alert("Failed to create post.");
+                alert("Failed to create post.");
             }
         } catch (error) {
             console.error("Post error:", error);
@@ -79,9 +94,9 @@ function Community({ loggedIn, userProfile }) {
             method: "DELETE",
             });
             if (response.ok) {
-            fetchPosts();
+                fetchPosts();
             } else {
-            alert("Failed to delete post.");
+                alert("Failed to delete post.");
             }
         } catch (error) {
             console.error("Delete error:", error);
@@ -124,7 +139,10 @@ function Community({ loggedIn, userProfile }) {
             const res = await fetch(`http://localhost:3001/api/posts/${postId}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ author: userProfile?.username || "Anonymous", content })
+                body: JSON.stringify({
+                    author: userProfile?.username || "Anonymous",
+                    content
+                }),
             });
             if (res.ok) {
                 const res2 = await fetch(`http://localhost:3001/api/posts/${postId}/comments`);
@@ -134,6 +152,29 @@ function Community({ loggedIn, userProfile }) {
             }
         } catch (err) {
             console.error("Comment error:", err);
+        }
+    };
+
+    const handleDeleteComment = async (postId, index, content) => {
+        try {
+            const res = await fetch(`http://localhost:3001/api/posts/${postId}/comments/delete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                content,
+                author: userProfile.username
+            })
+            });
+            if (res.ok) {
+                const res2 = await fetch(`http://localhost:3001/api/posts/${postId}/comments`);
+                const data = await res2.json();
+                setComments(prev => ({ ...prev, [postId]: data }));
+            } else {
+                const err = await res.json();
+                alert(err.message || "Failed to delete comment.");
+            }
+        } catch (err) {
+            console.error("Delete comment error:", err);
         }
     };
 
@@ -200,7 +241,25 @@ function Community({ loggedIn, userProfile }) {
                         </div>
                         <ul>
                             {(comments[post.id] || []).map((c, idx) => (
-                                <li key={idx}><strong>{c.author}</strong>: {c.content}</li>
+                                <li
+                                    key={idx}
+                                    className="comment-item"
+                                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                    >
+                                    {c.author === userProfile?.username && (
+                                        <button
+                                            className="delete-comment-btn"
+                                            onClick={() => handleDeleteComment(post.id, idx, c.content)}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f">
+                                                <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
+                                            </svg>
+                                        </button>
+                                    )}
+                                    <span>
+                                        <strong>{c.author}</strong> ({new Date(c.time).toLocaleString('sv-SE')}): {c.content}
+                                    </span>
+                                </li>
                             ))}
                         </ul>
                     </div>

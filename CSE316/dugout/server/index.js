@@ -119,7 +119,6 @@ app.post("/api/posts", async (req, res) => {
 
 app.get("/api/posts", async (req, res) => {
     const userEmail = req.query.email || "";
-
     try {
         const [posts] = await pool.query(`
             SELECT p.*, 
@@ -130,7 +129,6 @@ app.get("/api/posts", async (req, res) => {
             FROM posts p
             ORDER BY p.id DESC
         `, [userEmail]);
-
         res.status(200).json(posts);
     } catch (err) {
         console.error("Fetch posts error:", err);
@@ -166,13 +164,11 @@ app.delete("/api/posts/:id", async (req, res) => {
 app.post("/api/posts/:id/like", async (req, res) => {
     const { id } = req.params;
     const { email } = req.body;
-
     try {
         const [existing] = await pool.query(
             "SELECT * FROM post_likes WHERE post_id = ? AND user_email = ?",
             [id, email]
         );
-
         if (existing.length > 0) {
             await pool.query("DELETE FROM post_likes WHERE post_id = ? AND user_email = ?", [id, email]);
             await pool.query("UPDATE posts SET likes = likes - 1 WHERE id = ?", [id]);
@@ -196,6 +192,28 @@ app.post("/api/posts/:id/comments", async (req, res) => {
         res.status(201).json({ message: "Comment added." });
     } catch (err) {
         console.error("Comment add error:", err);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
+app.post("/api/posts/:id/comments/delete", async (req, res) => {
+    const { id } = req.params;
+    const { author, content } = req.body;
+    try {
+        const [existing] = await pool.query(
+            "SELECT * FROM comments WHERE post_id = ? AND content = ? AND author = ?",
+            [id, content, author]
+        );
+        if (existing.length === 0) {
+            return res.status(403).json({ message: "You cannot delete this comment." });
+        }
+        await pool.query(
+            "DELETE FROM comments WHERE post_id = ? AND content = ? AND author = ?",
+            [id, content, author]
+        );
+        res.status(200).json({ message: "Comment deleted." });
+    } catch (err) {
+        console.error("Delete comment error:", err);
         res.status(500).json({ message: "Server error." });
     }
 });
