@@ -152,7 +152,7 @@ function App() {
           <Route path="/player" element={<Player />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/estimate-system" element={<EstimateSystem />} />
-          <Route path="/community" element={<Community />} />
+          <Route path="/community" element={<Community loggedIn={loggedIn} userProfile={userProfile} />} />
           <Route path="/my-information" element={<MyInformation userProfile={userProfile} setUserProfile={setUserProfile}/>} />
           <Route path="/login" element={<Login setLoggedIn={setLoggedIn} setUserProfile={setUserProfile} loggedIn={loggedIn}/>} />
           <Route path="/signup" element={<Signup setLoggedIn={setLoggedIn} setUserProfile={setUserProfile}/>} />

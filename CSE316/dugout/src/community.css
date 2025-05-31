@@ -1,0 +1,65 @@
+.community-container {
+    padding: 20px;
+    background: #f1f1f1;
+}
+
+.title{
+    text-align: center;
+}
+
+.write-box {
+    background: #ccc;
+    padding: 20px;
+    text-align: center;
+}
+
+.write-btn,
+.done-btn {
+    background: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    margin: 10px;
+}
+
+.write-form {
+    background: #eee;
+    padding: 20px;
+    position: relative;
+}
+
+.write-form input,
+.write-form textarea {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.cancel-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    background: none;
+    color: black;
+    border: none;
+    cursor: pointer;
+}
+
+.post-list .post {
+    background: #ddd;
+    margin-top: 10px;
+    padding: 10px;
+}
+
+.delete-btn{
+    cursor: pointer;
+}
+
+.delete-btn:hover svg {
+    fill: red;
+}

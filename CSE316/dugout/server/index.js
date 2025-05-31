@@ -9,34 +9,34 @@ const upload = multer({ dest: "uploads/" });
 const port = 3001;
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'mingu10133*',
-  database: 'dugoutdb'
+    host: 'localhost',
+    user: 'root',
+    password: 'mingu10133*',
+    database: 'dugoutdb'
 });
 
 app.use(cors());
 app.use(express.json());
 
 app.post("/api/signup", async(req, res) => {
-  const { email, username, password, team } = req.body;
-  if(!email || !username || !password || !team){
-    return res.status(400).json({ message: "Missing required fields." });
-  }
-  try{
-    const [existing] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-      if (existing.length > 0) {
-          return res.status(409).json({ message: "Email already registered." });
-      }
-      await pool.query(
-        "INSERT INTO users (email, username, password, team) VALUES (?, ?, ?, ?)",
-        [email, username, password, team]
-      );
-      res.status(201).json({ message: "User registered successfully." });
-  }catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ message: "Server error." });
-  }
+    const { email, username, password, team } = req.body;
+    if(!email || !username || !password || !team){
+        return res.status(400).json({ message: "Missing required fields." });
+    }
+    try{
+        const [existing] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+        if (existing.length > 0) {
+            return res.status(409).json({ message: "Email already registered." });
+        }
+        await pool.query(
+            "INSERT INTO users (email, username, password, team) VALUES (?, ?, ?, ?)",
+            [email, username, password, team]
+        );
+        res.status(201).json({ message: "User registered successfully." });
+    }catch (err) {
+        console.error("Signup error:", err);
+        res.status(500).json({ message: "Server error." });
+    }
 })
 
 app.post("/api/login", async(req, res) => {
@@ -103,6 +103,27 @@ app.post("/api/update-image", upload.single("image"), async (req, res) => {
     }catch(error){
         console.error("Image update error:", error);
         res.status(500).json({ success: false });
+    }
+});
+
+app.post("/api/posts", async (req, res) => {
+    const { title, content, author } = req.body;
+    try {
+        await pool.query("INSERT INTO posts (title, content, author, time) VALUES (?, ?, ?, NOW())", [title, content, author]);
+        res.status(201).json({ message: "Post created successfully." });
+    } catch (err) {
+        console.error("Post creation error:", err);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
+app.get("/api/posts", async (req, res) => {
+    try {
+        const [posts] = await pool.query("SELECT * FROM posts ORDER BY id DESC");
+        res.status(200).json(posts);
+    } catch (err) {
+        console.error("Fetch posts error:", err);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
