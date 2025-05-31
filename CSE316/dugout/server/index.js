@@ -45,7 +45,7 @@ app.post("/api/login", async(req, res) => {
 app.post("/api/signup", async(req, res) => {
   const { email, username, password, team } = req.body;
   if(!email || !username || !password || !team){
-    return res.status(400).json({ meesage: "Missing required fields." });
+    return res.status(400).json({ message: "Missing required fields." });
   }
   try{
     const [existing] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);

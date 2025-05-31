@@ -24,6 +24,15 @@
     border-radius: 5px;
 }
 
+.signup-form select{
+    align-self: center;
+    width: 270px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid black;
+    border-radius: 5px;
+}
+
 .signup{
     padding: 8px 10px;
     font-size: 16px;

@@ -28,7 +28,8 @@ function Signup({ setLoggedIn, setUserProfile }) {
                 body: JSON.stringify({
                     email: email,
                     username: username,
-                    password: hashedPW
+                    password: hashedPW,
+                    team: team
                 })
             });
             
