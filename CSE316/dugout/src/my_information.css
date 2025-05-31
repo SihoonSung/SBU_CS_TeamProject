@@ -1,0 +1,145 @@
+.profile-image{
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.info{
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    min-height: 100vh;
+}
+.information{
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+}
+.information li{
+    margin: 10px 0;
+    width: auto;
+}
+.change_image{
+    width: 100px;
+    padding: 5px;
+    background: #E6E6FA;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.change_pw{
+    width: 125px;
+    padding: 5px;
+    background: #E6E6FA;
+    border: 1px solid black;
+    border-radius: 5px;
+    margin-left: 5px;
+    cursor: pointer;
+}
+.change_name{
+    width: 100px;
+    padding: 5px;
+    background: #E6E6FA;
+    border: 1px solid black;
+    border-radius: 5px;
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.modal{
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    top: 5%;
+    transform: translate(-50%);
+    background-color: white;
+    padding: 0;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    width: 400px;
+}
+.modal-body{
+    padding: 20px;
+}
+.modal h3, .modal h4 {
+    margin-top: 0;
+}
+.modal h3{
+    margin: 15px 0;
+    margin-left: 10px;
+    font-size: 18px;
+}
+.modal h4{
+    font-weight: 100;
+    margin-bottom: 2px;
+}
+.modal input[type="file"]{ 
+    margin: 10px 0;
+    width: 100%;
+    padding: 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.modal input[type="password"],
+.modal input[type="text"]{
+    margin: 10px 0;
+    padding: 10px;
+    width: 95%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+.modal .close, .modal .save {
+    padding: 10px 10px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+.modal .close {
+    background-color: #6a6969;
+    color: white;
+    margin-right: 5px;
+}
+.modal .save {
+    background-color: #007bff;
+    color: white;
+}
+.buttons {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #aaa;
+    padding: 10px 10px;
+}
+.header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #aaa;
+    width: 100%;
+}
+.overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.exit{
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.change_image:hover, 
+.change_pw:hover,
+.change_name:hover{
+    background-color: black;
+    color: white;
+}
