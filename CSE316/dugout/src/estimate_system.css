@@ -62,13 +62,13 @@
 }
 
 .pos-CF { top: 0px; left: 210px; }
-.pos-LF { top: 50px; left: 0px; }
-.pos-RF { top: 50px; left: 400px; }
+.pos-LF { top: 50px; left: -20px; }
+.pos-RF { top: 50px; left: 420px; }
 .pos-SS { top: 150px; left: 100px; }
 .pos-2B { top: 150px; left: 300px; }
-.pos-3B { top: 280px; left: 10px; }
+.pos-3B { top: 280px; left: -10px; }
 .pos-P  { top: 280px; left: 210px; }
-.pos-1B { top: 280px; left: 400px; }
+.pos-1B { top: 280px; left: 420px; }
 .pos-C  { top: 450px; left: 210px; }
 .pos-DH { top: 450px; left: -80px; }
 
