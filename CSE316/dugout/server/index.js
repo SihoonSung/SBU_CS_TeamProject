@@ -118,14 +118,36 @@ app.post("/api/posts", async (req, res) => {
 });
 
 app.get("/api/posts", async (req, res) => {
+    const userEmail = req.query.email || "";
+
     try {
-        const [posts] = await pool.query("SELECT * FROM posts ORDER BY id DESC");
+        const [posts] = await pool.query(`
+            SELECT p.*, 
+                    EXISTS(
+                        SELECT 1 FROM post_likes pl 
+                        WHERE pl.post_id = p.id AND pl.user_email = ?
+                    ) AS likedByUser
+            FROM posts p
+            ORDER BY p.id DESC
+        `, [userEmail]);
+
         res.status(200).json(posts);
     } catch (err) {
         console.error("Fetch posts error:", err);
         res.status(500).json({ message: "Server error." });
     }
 });
+
+const fetchPosts = async () => {
+    try {
+        const email = userProfile?.email || "";
+        const response = await fetch(`http://localhost:3001/api/posts?email=${email}`);
+        const data = await response.json();
+        setPosts(data);
+    } catch (error) {
+        console.error("Fetch error:", error);
+    }
+};
 
 app.delete("/api/posts/:id", async (req, res) => {
     const { id } = req.params;
@@ -137,6 +159,54 @@ app.delete("/api/posts/:id", async (req, res) => {
         res.status(200).json({ message: "Post deleted." });
     } catch (err) {
         console.error("Delete error:", err);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
+app.post("/api/posts/:id/like", async (req, res) => {
+    const { id } = req.params;
+    const { email } = req.body;
+
+    try {
+        const [existing] = await pool.query(
+            "SELECT * FROM post_likes WHERE post_id = ? AND user_email = ?",
+            [id, email]
+        );
+
+        if (existing.length > 0) {
+            await pool.query("DELETE FROM post_likes WHERE post_id = ? AND user_email = ?", [id, email]);
+            await pool.query("UPDATE posts SET likes = likes - 1 WHERE id = ?", [id]);
+            return res.status(200).json({ liked: false });
+        } else {
+            await pool.query("INSERT INTO post_likes (post_id, user_email) VALUES (?, ?)", [id, email]);
+            await pool.query("UPDATE posts SET likes = likes + 1 WHERE id = ?", [id]);
+            return res.status(200).json({ liked: true });
+        }
+    } catch (err) {
+        console.error("Toggle like error:", err);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
+app.post("/api/posts/:id/comments", async (req, res) => {
+    const { id } = req.params;
+    const { author, content } = req.body;
+    try {
+        await pool.query("INSERT INTO comments (post_id, author, content, time) VALUES (?, ?, ?, NOW())", [id, author, content]);
+        res.status(201).json({ message: "Comment added." });
+    } catch (err) {
+        console.error("Comment add error:", err);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
+app.get("/api/posts/:id/comments", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [comments] = await pool.query("SELECT author, content, time FROM comments WHERE post_id = ? ORDER BY id ASC", [id]);
+        res.status(200).json(comments);
+    } catch (err) {
+        console.error("Fetch comments error:", err);
         res.status(500).json({ message: "Server error." });
     }
 });

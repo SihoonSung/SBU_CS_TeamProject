@@ -6,9 +6,12 @@ function Community({ loggedIn, userProfile }) {
     const [posts, setPosts] = useState([]);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [comments, setComents] = useState({});
+    const [commentInputs, setCommentInputs] = useState({});
 
     const fetchPosts = async () => {
         try {
+            const email = userProfile?.email || "";
             const response = await fetch("http://localhost:3001/api/posts");
             const data = await response.json();
             setPosts(data);
@@ -18,13 +21,15 @@ function Community({ loggedIn, userProfile }) {
     };
 
     useEffect(() => {
-        fetchPosts();
-    }, []);
+        if (userProfile?.email) {
+            fetchPosts();
+        }
+    }, [userProfile?.email]);
 
     const handleWriteClick = () => {
         setShowForm(true);
     };
-
+    
     const handleCancel = () => {
         setShowForm(false);
         setTitle('');
@@ -40,7 +45,6 @@ function Community({ loggedIn, userProfile }) {
             alert("Please enter a title.");
             return;
         }
-
         try {
             const response = await fetch("http://localhost:3001/api/posts", {
             method: "POST",
@@ -51,7 +55,6 @@ function Community({ loggedIn, userProfile }) {
                 author: userProfile?.username || "Anonymous",
             }),
             });
-
             if (response.ok) {
             fetchPosts();
             setShowForm(false);
@@ -71,20 +74,66 @@ function Community({ loggedIn, userProfile }) {
             alert("You cannot delete.");
             return;
         }
-
         try {
             const response = await fetch(`http://localhost:3001/api/posts/${id}`, {
             method: "DELETE",
             });
-
             if (response.ok) {
-            fetchPosts(); // 서버에서 다시 받아와 반영
+            fetchPosts();
             } else {
             alert("Failed to delete post.");
             }
         } catch (error) {
             console.error("Delete error:", error);
             alert("Server error.");
+        }
+    };
+
+    const handleLike = async (postId) => {
+        if (!userProfile?.email) {
+            alert("Please login to like posts.");
+            return;
+        }
+        try {
+            const res = await fetch(`http://localhost:3001/api/posts/${postId}/like`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: userProfile.email })
+            });
+
+            if (res.ok) {
+                fetchPosts();
+            } else {
+                const errData = await res.json();
+                alert(errData.message || "Failed to toggle like.");
+            }
+        } catch (err) {
+            console.error("Toggle like error:", err);
+        }
+    };
+
+    const handleCommentChange = (postId, value) => {
+        setCommentInputs({ ...commentInputs, [postId]: value });
+    };
+
+    const handleAddComment = async (postId) => {
+        const content = commentInputs[postId];
+        if (!content?.trim()) return;
+
+        try {
+            const res = await fetch(`http://localhost:3001/api/posts/${postId}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ author: userProfile?.username || "Anonymous", content })
+            });
+            if (res.ok) {
+                const res2 = await fetch(`http://localhost:3001/api/posts/${postId}/comments`);
+                const data = await res2.json();
+                setComments(prev => ({ ...prev, [postId]: data }));
+                setCommentInputs(prev => ({ ...prev, [postId]: "" }));
+            }
+        } catch (err) {
+            console.error("Comment error:", err);
         }
     };
 
@@ -130,10 +179,30 @@ function Community({ loggedIn, userProfile }) {
                                     <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
                                 </svg>
                             </div>
-                            <p><strong>{post.author}</strong> - {post.time}</p>
+                            <p>
+                                <strong>{post.author}</strong> - {new Date(post.time).toLocaleString('sv-SE', {
+                                    hour12: false
+                                })}
+                            </p>
                         </div>
                         <h3>{post.title}</h3>
                         <p>{post.content}</p>
+                        <button onClick={() => handleLike(post.id)}>
+                            👍 Like
+                        </button> {post.likes}
+                        <div>
+                            <input
+                                value={commentInputs[post.id] || ''}
+                                onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                                placeholder="Write a comment..."
+                            />
+                            <button onClick={() => handleAddComment(post.id)}>Comment</button>
+                        </div>
+                        <ul>
+                            {(comments[post.id] || []).map((c, idx) => (
+                                <li key={idx}><strong>{c.author}</strong>: {c.content}</li>
+                            ))}
+                        </ul>
                     </div>
                 ))}
             </div>
