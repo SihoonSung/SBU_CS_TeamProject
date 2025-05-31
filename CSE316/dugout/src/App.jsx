@@ -10,10 +10,13 @@ import Schedule from './schedule';
 import EstimateSystem from './estimate_system';
 import Community from './community';
 import Login from './login';
+import Signup from './signup';
 
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
@@ -81,7 +84,8 @@ function App() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/estimate-system" element={<EstimateSystem />} />
           <Route path="/community" element={<Community />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Sign setLoggedIn={setLoggedIn} setUserProfile={setUserProfile} loggedIn={loggedIn}/>} />
+          <Route path="/signup" element={<Signup setLoggedIn={setLoggedIn} setUserProfile={setUserProfile}/>} />
         </Routes>
       </>
     </Router>
