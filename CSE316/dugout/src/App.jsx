@@ -84,7 +84,7 @@ function App() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/estimate-system" element={<EstimateSystem />} />
           <Route path="/community" element={<Community />} />
-          <Route path="/login" element={<Sign setLoggedIn={setLoggedIn} setUserProfile={setUserProfile} loggedIn={loggedIn}/>} />
+          <Route path="/login" element={<Login setLoggedIn={setLoggedIn} setUserProfile={setUserProfile} loggedIn={loggedIn}/>} />
           <Route path="/signup" element={<Signup setLoggedIn={setLoggedIn} setUserProfile={setUserProfile}/>} />
         </Routes>
       </>

@@ -8,10 +8,11 @@ function Signup({ setLoggedIn, setUserProfile }) {
     const [password, setPassword] = useState('');
     const [passwordCheck, setPasswordCheck] = useState('');
     const [username, setUsername] = useState('');
+    const [team, setTeam] = useState('');
     const navigate = useNavigate();
 
     const handleSignup = async () => {
-        if(!email || !password || !passwordCheck || !username){
+        if(!email || !password || !passwordCheck || !username || !team){
             alert("All fields are required");
             return;
         }
@@ -101,6 +102,20 @@ function Signup({ setLoggedIn, setUserProfile }) {
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="mione"
                 />
+                <label>Select Team</label>
+                <select value={team} onChange={(e) => setTeam(e.target.value)}>
+                    <option value="">-- Select your team --</option>
+                    <option value="Doosan Bears">Doosan Bears</option>
+                    <option value="LG Twins">LG Twins</option>
+                    <option value="Samsung Lions">Samsung Lions</option>
+                    <option value="Lotte Giants">Lotte Giants</option>
+                    <option value="SSG Landers">SSG Landers</option>
+                    <option value="Hanwha Eagles">Hanwha Eagles</option>
+                    <option value="NC Dinos">NC Dinos</option>
+                    <option value="KT Wiz">KT Wiz</option>
+                    <option value="KIA Tigers">KIA Tigers</option>
+                    <option value="Kiwoom Heroes">Kiwoom Heroes</option>
+                </select>
                 <button className="signup" onClick={handleSignup}>Sign up</button>
             </div>
         </div>
