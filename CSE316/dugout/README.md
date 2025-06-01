@@ -1,12 +1,27 @@
-# React + Vite
+You have to install these requirements.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+npm install
+npm install mysql2
+npm install crypto-js
+npm install react-router-dom
+npm install express cors
+pip install requests beautifulsoup4 pandas
+pip install mysql-connector-python
+GOOGLE_API_KEY=AIzaSyB7vqLL9iGNP8wMaMrPI9IAeh0U3ytVkUw
+pip install python-dotenv
+npm list react react-dom react-router-dom
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+FLASK_APP=score.py flask run --host=0.0.0.0 --port=5001
+source venv/bin/activate
+pip install flask
+pip install selenium
+pip install flask-cors
+pip install beautifulsoup4
+pip install pymysql
+brew install chromedriver
+pip install flask flask-cors
+pip install selenium
+brew install --cask chromedriver
+source /Users/minguhwang/Documents/GitHub/SBU_CS_TeamProject/venv/bin/activate
+pip install python-dotenv
+pip install requests
