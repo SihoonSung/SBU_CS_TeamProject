@@ -107,7 +107,7 @@ const Home = () => {
                 <div className="team-rank-info">
                   <span className="team-rank">{team.rank}</span>
                   <span className="team-name">{team.name}</span>
-                  <span className="team-gap">+{team.gap}games </span>
+                  <span className="team-gap">(+{team.gap}games) </span>
                 </div>
               </div>
             ))}
