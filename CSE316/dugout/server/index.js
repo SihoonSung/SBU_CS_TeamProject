@@ -270,7 +270,7 @@ app.get("/api/leaders/pitchers", async (req, res) => {
     const [rows] = await pool.query(`
       SELECT name, team, era, ip
       FROM pitchers
-      WHERE ip >= 30
+      WHERE ip >= 50
       ORDER BY era ASC
       LIMIT 3
     `);
