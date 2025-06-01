@@ -8,6 +8,8 @@ const PlayerPage = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [allPlayers, setAllPlayers] = useState([]);
+    const [selectedPlayer, setSelectedPlayer] = useState(null);
+    const [hasSearched, setHasSearched] = useState(false);
 
     useEffect(() => {
         const fetchLeaders = async () => {
@@ -73,13 +75,24 @@ const PlayerPage = () => {
     const handleSearchChange = (event) => {
         const value = event.target.value.toLowerCase();
         setSearchTerm(value);
-
         const rawSuggestions = allPlayers.flatMap(p => [p.name, p.team]);
         const unique = Array.from(new Set(rawSuggestions.filter(Boolean)))
             .filter(val => val.toLowerCase().startsWith(value))
             .slice(0, 10);
-
         setSuggestions(unique);
+    };
+
+    const handleSearchSubmit = () => {
+        const query = searchTerm.toLowerCase();
+        const matched = allPlayers.find(p =>
+            p.name.toLowerCase() === query || p.team.toLowerCase() === query
+        );
+        setSelectedPlayer(matched || null);
+        setHasSearched(true);
+        if (matched) {
+            const target = document.getElementById("player-result-section");
+            target?.scrollIntoView({ behavior: "smooth" });
+        }
     };
 
     return (
@@ -91,6 +104,9 @@ const PlayerPage = () => {
                 placeholder="Search Players Name or Team"
                 value={searchTerm}
                 onChange={handleSearchChange}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSearchSubmit();
+                }}
                 />
                 {searchTerm && suggestions.length > 0 && (
                     <ul className="autocomplete-list">
@@ -108,12 +124,37 @@ const PlayerPage = () => {
                         ))}
                     </ul>
                 )}
-                <button className="player-search-button" aria-label="Search">
+                <button className="player-search-button" aria-label="Search" onClick={handleSearchSubmit}>
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
                         <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
                     </svg>
                 </button>
             </div>
+
+            {selectedPlayer && (
+                <div id="player-result-section" className="search-result">
+                    <div className="search-player-card">
+                        <div className="search-player-info">
+                            <p><strong>Name:</strong> {selectedPlayer.name}</p>
+                            <p><strong>Team:</strong> {selectedPlayer.team}</p>
+                            {selectedPlayer.position && <p><strong>Position:</strong> {selectedPlayer.position}</p>}
+                            {selectedPlayer.war && <p><strong>WAR:</strong> {selectedPlayer.war.toFixed(1)}</p>}
+                            {selectedPlayer.era && <p><strong>ERA:</strong> {selectedPlayer.era}</p>}
+                            {selectedPlayer.avg && <p><strong>AVG:</strong> {selectedPlayer.avg.toFixed(3)}</p>}
+                            {selectedPlayer.hr && <p><strong>HR(Home Run):</strong> {selectedPlayer.hr}</p>}
+                            {selectedPlayer.rbi && <p><strong>RBI(Run Batted In):</strong> {selectedPlayer.rbi}</p>}
+                            {selectedPlayer.so && <p><strong>SO(Struck Out):</strong> {selectedPlayer.so}</p>}
+                            {selectedPlayer.ip && <p><strong>IP(Innings Pitched):</strong> {selectedPlayer.ip}</p>}
+                            {selectedPlayer.battingScore && <p><strong>Batting Score:</strong> {selectedPlayer.battingScore.toFixed(1)}</p>}
+                            {selectedPlayer.pitcherScore && <p><strong>Pitching Score:</strong> {selectedPlayer.pitcherScore.toFixed(1)}</p>}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {hasSearched && searchTerm && !selectedPlayer && (
+                <div className="no-search-result"><strong>No player found with that name or team.</strong></div>
+            )}
 
             <div className="top-players-section">
                 <div className="top-list-container">
