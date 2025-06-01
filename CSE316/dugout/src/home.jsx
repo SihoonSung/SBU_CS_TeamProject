@@ -1,7 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './home.css'; 
 
 const Home = () => {
+    const [topPitchers, setTopPitchers] = useState([]);
+    const [topBatters, setTopBatters] = useState([]);
+
+    useEffect(() => {
+        const fetchLeaders = async () => {
+            const pRes = await fetch("http://localhost:3001/api/leaders/pitchers");
+            const bRes = await fetch("http://localhost:3001/api/leaders/batters");
+            const pitchers = await pRes.json();
+            const batters = await bRes.json();
+            setTopPitchers(pitchers);
+            setTopBatters(batters);
+        };
+        fetchLeaders();
+    }, []);
+
     const kboTeams = [
         { id: 1, rank: 1, name: 'SSG Landers', logoUrl: '/images/logos/ssg_landers.png' },
         { id: 2, rank: 2, name: 'SAMSUNG Lions', logoUrl: '/images/logos/samsung_lions.png' },
@@ -50,22 +65,31 @@ const Home = () => {
             </section>
 
             <section className="player-stats-section">
-            <div className="stats-column pitcher-column">
-                <h3 className="stats-title-vertical">PITCHER</h3>
-                <div className="stats-content-box">
-                <p>1. 안우진 (Kiwoom) - ERA 2.11</p>
-                <p>2. 김광현 (SSG) - ERA 2.13</p>
-                <p>3. 케이시 켈리 (LG) - ERA 2.54</p>
+                <div className="stats-column pitcher-column">
+                    <h3 className="stats-title-vertical">PITCHER</h3>
+                    <div className="stats-content-box">
+                        {topPitchers.map((p, i) => (
+                        <p key={i}>
+                            {`${i + 1}. ${p.name} (${p.team}) - ERA ${parseFloat(p.era).toFixed(2)}`}
+                        </p>
+                        ))}
+                    </div>
                 </div>
-            </div>
-            <div className="stats-column batter-column">
-                <h3 className="stats-title-vertical">BATTER</h3>
-                <div className="stats-content-box">
-                <p>1. 이정후 (Kiwoom) - AVG .349</p>
-                <p>2. 호세 피렐라 (Samsung) - AVG .342</p>
-                <p>3. 박병호 (KT) - HR 35</p>
+                <div className="stats-column batter-column">
+                    <h3 className="stats-title-vertical">BATTER</h3>
+                    <div className="stats-content-box">
+                        {topBatters.map((b, i) => {
+                        const avg = parseFloat(b.avg);
+                        return (
+                            <p key={i}>
+                            {`${i + 1}. ${b.name} (${b.team}) - ${
+                                isNaN(avg) ? `HR ${b.hr ?? 0}` : `AVG ${avg.toFixed(3)}`
+                            }`}
+                            </p>
+                        );
+                        })}
+                    </div>
                 </div>
-            </div>
             </section>
 
             <section className="live-scores-section">

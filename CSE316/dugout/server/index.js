@@ -264,3 +264,45 @@ app.get("/api/players", async (req, res) => {
     res.status(500).json({ message: "Database error." });
   }
 });
+
+app.get("/api/leaders/pitchers", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT name, team, era, ip
+      FROM pitchers
+      WHERE ip >= 30
+      ORDER BY era ASC
+      LIMIT 3
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error("Pitchers leader fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/api/leaders/batters", async (req, res) => {
+  try {
+    const allTables = ['C','1B','2B','3B','SS','LF','CF','RF','DH'];
+    const results = [];
+    for (const pos of allTables) {
+      const [rows] = await pool.query(`SELECT name, team, avg, pa FROM batters_${pos}`);
+      rows.forEach(row => {
+        const numericAvg = parseFloat(row.avg);
+        const pa = Number(row.pa);
+        if (!isNaN(numericAvg) && pa >= 100) {
+          results.push({ name: row.name, team: row.team, avg: numericAvg });
+        }
+      });
+    }
+    results.sort((a, b) => b.avg - a.avg);
+    const top3 = results.slice(0, 3).map(player => ({
+      ...player,
+      avg: player.avg.toFixed(3)
+    }));
+    res.json(top3);
+  } catch (err) {
+    console.error("Batters leader fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});

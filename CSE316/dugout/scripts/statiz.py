@@ -11,6 +11,21 @@ api_key = os.getenv("GOOGLE_API_KEY")
 name_cache = {}
 
 foreigner_name_dict = {
+    "이형종": "Lee Hyung-jong",
+    "나성범": "Na Sung-bum",
+    "송찬의": "Song Chaneui",
+    "한유섬": "Han Yusum",
+    "조수행": "Jo Suhaeng",
+    "함수호": "Ham Suho",
+    "최정": "Choi Jung",
+    "배정대": "Bae Jeong-dae",
+    "유로결": "Yoo Rokyeol",
+    "천재환": "Cheon JaeHwan",
+    "이율예": "Lee Yul-ye",
+    "정보근": "Jung Bogeun",
+    "이로운": "Lee Roun",
+    "소형준": "So Hyung-jun",
+    "양의지": "Yang Euji",
     "네일": "James Naile",
     "올러": "Adam Oller",
     "위즈덤": "Patrick Wisdom",
@@ -131,6 +146,7 @@ def create_batter_table_if_not_exists(position, cursor):
             ab INT,
             hr INT,
             rbi INT,
+            avg FLOAT,
             battingScore FLOAT
         );
     """)
@@ -180,11 +196,20 @@ fielding_urls = {
 
 pitching_url = "https://statiz.sporki.com/stats/?m=main&m2=pitching&m3=default&so=WAR&ob=DESC&year=2025&sy=&ey=&te=&po=&lt=10100&reg=A&pe=&ds=&de=&we=&hr=&ha=&ct=&st=&vp=&bo=&pt=&pp=&ii=&vc=&um=&oo=&rr=&sc=&bc=&ba=&li=&as=&ae=&pl=&gc=&lr=&pr=50&ph=&hs=&us=&na=&ls=&sf1=&sk1=&sv1=&sf2=&sk2=&sv2="
 
-batting_columns = ["Rank", "Name", "Team", "WAR", "G", "PA", "AB", "R", "H", "2B", "3B", "HR", "TB", "RBI", "SB", "CS", "BB", "HBP", "SO", "AVG", "OBP"]
-pitching_columns = ["Rank", "Name", "Team", "WAR", "G", "W", "L", "ERA", "IP", "SO", "SV", "HLD"]
+batting_columns = [
+    "Rank", "Name", "Team", "WAR", "G", "oWAR", "dWAR", "PA", "ePA", 
+    "AB", "R", "H", "2B", "3B", "HR", "TB", "RBI", 
+    "SB", "CS", "BB", "HP", "IB", "SO", "GDP", "SH", "SF", 
+    "AVG", "OBP", "SLG", "OPS", "R/ePA", "wRC+"
+]
+pitching_columns = [
+    "Rank", "Name", "Team", "WAR", "G", "GS", "GR", "GF", "CG", "SHO", "W", "L", "S", "HD", "IP", "ER", "R", 
+    "rRA", "TBF", "H", "2B", "3B", "HR", "BB", "HP", "IB", "SO", "ROE", "BK", "WP", "ERA", "RA9", "rRA9", 
+    "rRA9pf", "FIP", "WHIP"
+]
 fielding_columns = ["Rank", "Name", "Team", "WAR", "G", "Inn", "dWAR", "E", "A", "PO", "DP"]
 
-df_pitching = extract_table_data(pitching_url, pitching_columns, 12)
+df_pitching = extract_table_data(pitching_url, pitching_columns, len(pitching_columns))
 
 conn = mysql.connector.connect(
     host="localhost",
@@ -195,27 +220,33 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 # === Batters ===
+for pos in batting_urls.keys():
+    cursor.execute(f"DROP TABLE IF EXISTS batters_{pos}")
 for pos, url in batting_urls.items():
-    df_batting = extract_table_data(url, batting_columns, 21)
+    df_batting = extract_table_data(url, batting_columns, 32)
     create_batter_table_if_not_exists(pos, cursor)
     for _, row in df_batting.iterrows():
         try:
             war = float(row["WAR"])
             pa = int(float(row["PA"]))
-            ab = int(float(row["AB"]))
+            ab_raw = row["AB"]
+            ab = int(float(ab_raw)) if ab_raw.strip() != '' else 0
             hr = int(row["HR"])
             rbi = int(row["RBI"])
+            avg_raw = row["AVG"].replace(',', '').strip()
+            avg = float(avg_raw) if avg_raw else 0.0
             score = hr * 6 + rbi * 1.2 + war * 12
             english_name = translate_korean_to_english(row["Name"], api_key)
             time.sleep(0.2)
             cursor.execute(f"""
-                INSERT INTO batters_{pos} (name, team, war, pa, ab, hr, rbi, battingScore)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (english_name, row["Team"], war, pa, ab, hr, rbi, score))
+                INSERT INTO batters_{pos} (name, team, war, pa, ab, hr, rbi, avg, battingScore)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (english_name, row["Team"], war, pa, ab, hr, rbi, avg, score))
         except Exception as e:
             print(f"[Batters {pos} ERROR] {row['Name']} - {e}")
 
 # === Pitchers ===
+cursor.execute("DROP TABLE IF EXISTS pitchers")
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS pitchers (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -233,29 +264,36 @@ CREATE TABLE IF NOT EXISTS pitchers (
     pitcherScore FLOAT
 );
 """)
+
 cursor.execute("DELETE FROM pitchers")
+
 for _, row in df_pitching.iterrows():
     try:
-        war = float(row["WAR"])
-        w = int(row["W"])
-        sv = int(row["SV"])
-        hld = int(row["HLD"])
-        era = float(row["ERA"])
-        g = int(row["G"])
-        l = int(row["L"])
-        ip = float(row["IP"])
-        so = int(row["SO"])
+        war = float(row.get("WAR", 0))
+        w = int(float(row.get("W", 0)))
+        sv = int(float(row.get("SV", 0)))
+        hld = int(float(row.get("HLD", 0)))
+        era = float(row.get("ERA", 0))
+        g = int(float(row.get("G", 0)))
+        l = int(float(row.get("L", 0)))
+        ip = float(row.get("IP", 0))
+        so = int(float(row.get("SO", 0)))
+
         score = war * 10 + w * 2 + sv * 1.5 + hld * 1.5 - era
-        english_name = translate_korean_to_english(row["Name"], api_key)
+
+        english_name = translate_korean_to_english(row.get("Name", ""), api_key)
         time.sleep(0.2)
+
         cursor.execute("""
             INSERT INTO pitchers (name, team, war, g, w, l, era, ip, so, sv, hld, pitcherScore)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            english_name, row["Team"], war, g, w, l, era, ip, so, sv, hld, score
+            english_name,
+            row.get("Team", ""),
+            war, g, w, l, era, ip, so, sv, hld, score
         ))
     except Exception as e:
-        print(f"[Pitchers ERROR] {row['Name']} - {e}")
+        print(f"[Pitchers ERROR] {row.get('Name', 'UNKNOWN')} - {e}")
         continue
 
 # === Fielders ===
