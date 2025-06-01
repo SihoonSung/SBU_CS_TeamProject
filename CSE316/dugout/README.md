@@ -26,3 +26,10 @@ source /Users/minguhwang/Documents/GitHub/SBU_CS_TeamProject/venv/bin/activate
 pip install python-dotenv
 pip install requests
 http://localhost:5001/live-scores
+
+You have to run 3 servers.
+First /SBU_CS_TeamProject/CSE316/dugout npm run dev,
+second /SBU_CS_TeamProject/CSE316/dugout/server node index.js,
+and then /SBU_CS_TeamProject/CSE316/dugout/scripts in here you have to activate 
+virtual environment by source venv/bin/activate and then 
+FLASK_APP=score.py flask run --host=0.0.0.0 --port=5001
