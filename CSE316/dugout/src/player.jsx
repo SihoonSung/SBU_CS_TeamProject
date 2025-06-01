@@ -8,7 +8,7 @@ const PlayerPage = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [allPlayers, setAllPlayers] = useState([]);
-    
+
     useEffect(() => {
         const fetchLeaders = async () => {
             try {
@@ -46,23 +46,18 @@ const PlayerPage = () => {
     const fetchAllPlayers = async () => {
         const battingPositions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'];
         const fieldingPositions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'];
-
         const battingPromises = battingPositions.map(pos =>
             fetch(`http://localhost:3001/api/players?type=batting&position=${pos}`).then(res => res.json())
         );
-
         const fieldingPromises = fieldingPositions.map(pos =>
             fetch(`http://localhost:3001/api/players?type=fielding&position=${pos}`).then(res => res.json())
         );
-
         const pitchingPromise = fetch(`http://localhost:3001/api/players?type=pitching`).then(res => res.json());
-
         const [pitchers, ...rest] = await Promise.all([
             pitchingPromise,
             ...battingPromises,
             ...fieldingPromises
         ]);
-
         const players = [...pitchers, ...rest.flat()];
         return players;
     };
