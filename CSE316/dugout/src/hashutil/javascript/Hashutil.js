@@ -1,4 +1,4 @@
-import sha256 from "crypto-js/sha256.js";
+import sha256 from "crypto-js/sha256";
 
 var UInt32 = function (value) {
   return value & 0x7fffffff;
