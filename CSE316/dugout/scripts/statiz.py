@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import mysql.connector
 
-def extract_table_data(url, columns):
+def extract_table_data(url, columns, expected_col_count):
     headers = {"User-Agent": "Mozilla/5.0"}
     res = requests.get(url, headers=headers)
     soup = BeautifulSoup(res.text, 'html.parser')
@@ -18,22 +18,24 @@ def extract_table_data(url, columns):
         cols = row.find_all('td')
         if not cols:
             continue
-        data.append([col.text.strip() for col in cols])
+        row_data = [col.text.strip() for col in cols]
+        if len(row_data) >= expected_col_count:
+            data.append(row_data[:expected_col_count])
 
-    return pd.DataFrame(data, columns=columns[:len(data[0])])
+    return pd.DataFrame(data, columns=columns)
 
 
 batting_url = "https://statiz.sporki.com/stats/?m=main&m2=batting"
 pitching_url = "https://statiz.sporki.com/stats/?m=main&m2=pitching"
-defense_url = "https://statiz.sporki.com/stats/?m=main&m2=defense"
+fielding_url = "https://statiz.sporki.com/stats/?m=main&m2=fielding"
 
-batting_columns = ["Rank", "Name", "Team", "WAR", "G", "PA", "AB", "R", "H", "2B", "3B", "HR", "TB", "RBI", "SB", "CS", "BB", "HBP", "SO", "AVG"]
+batting_columns = ["Rank", "Name", "Team", "WAR", "G", "PA", "AB", "R", "H", "2B", "3B", "HR", "TB", "RBI", "SB", "CS", "BB", "HBP", "SO", "AVG", "OBP"]
 pitching_columns = ["Rank", "Name", "Team", "WAR", "G", "W", "L", "ERA", "IP", "SO", "SV", "HLD"]
-defense_columns = ["Rank", "Name", "Team", "WAR", "G", "Inn", "dWAR", "E", "A", "PO", "DP"]
+fielding_columns = ["Rank", "Name", "Team", "WAR", "G", "Inn", "dWAR", "E", "A", "PO", "DP"]
 
-df_batting = extract_table_data(batting_url, batting_columns)
-df_pitching = extract_table_data(pitching_url, pitching_columns)
-df_defense = extract_table_data(defense_url, defense_columns)
+df_batting = extract_table_data(batting_url, batting_columns, 21)
+df_pitching = extract_table_data(pitching_url, pitching_columns, 12)
+df_fielding = extract_table_data(fielding_url, fielding_columns, 11)
 
 conn = mysql.connector.connect(
     host="localhost",
@@ -104,9 +106,9 @@ for _, row in df_pitching.iterrows():
     except:
         continue
 
-# === Defenders with defensiveScore ===
+# === Fielders with fieldingScore ===
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS defenders (
+CREATE TABLE IF NOT EXISTS fielders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50),
     team VARCHAR(20),
@@ -118,11 +120,11 @@ CREATE TABLE IF NOT EXISTS defenders (
     assists INT,
     putouts INT,
     dp INT,
-    defensiveScore FLOAT
+    fieldingScore FLOAT
 );
 """)
-cursor.execute("DELETE FROM defenders")
-for _, row in df_defense.iterrows():
+cursor.execute("DELETE FROM fielders")
+for _, row in df_fielding.iterrows():
     try:
         dwar = float(row["dWAR"])
         err = int(row["E"])
@@ -130,7 +132,7 @@ for _, row in df_defense.iterrows():
         po = int(row["PO"])
         score = dwar * 10 - err * 2 + assists * 0.5 + po * 0.5
         cursor.execute("""
-            INSERT INTO defenders (name, team, war, g, inn, dwar, err, assists, putouts, dp, defensiveScore)
+            INSERT INTO fielders (name, team, war, g, inn, dwar, err, assists, putouts, dp, fieldingScore)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             row["Name"], row["Team"], float(row["WAR"]), int(row["G"]), float(row["Inn"]),

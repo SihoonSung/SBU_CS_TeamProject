@@ -34,8 +34,8 @@ const mergePlayerData = (batting, pitching, fielding) => {
         } else if (type === 'fielding') {
             merged[key] = { 
                 ...merged[key], 
-                defensiveInnings: player.inn,
-                defensiveScore: player.defensiveScore
+                fieldingInnings: player.inn,
+                fieldingScore: player.fieldingScore
             };
         }
     };
@@ -90,8 +90,8 @@ function EstimateSystem() {
                 eligible.sort((a, b) => b.battingScore - a.battingScore);
             } else {
                 eligible.sort((a, b) => 
-                    (b.defensiveScore + b.battingScore) - 
-                    (a.defensiveScore + a.battingScore)
+                    (b.fieldingScore + b.battingScore) - 
+                    (a.fieldingScore + a.battingScore)
                 );
             }
 
@@ -113,7 +113,7 @@ function EstimateSystem() {
             return !isPrimaryFielder && (p.plateAppearances >= 2/3 * 445 || p.atBats >= 297);
         }
 
-        return p.defensiveInnings >= (144 * 5); // 720 innings
+        return p.fieldingInnings >= (144 * 5); // 720 innings
     };
 
     return (
