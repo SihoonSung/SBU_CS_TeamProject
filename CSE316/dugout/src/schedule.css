@@ -1,0 +1,166 @@
+.schedule-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f4f7f6;
+}
+
+.schedule-period-title {
+  text-align: center;
+  font-size: 2em;
+  color: #2c3e50;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.schedule-grid-container {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.schedule-day-column {
+  background-color: #fdfdfd;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.schedule-day-name {
+  text-align: center;
+  font-size: 1.1em;
+  color: #343a40;
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+.schedule-games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.schedule-game-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #f1f3f5;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.schedule-game-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.schedule-game-score {
+  font-weight: bold;
+  font-size: 0.95em;
+  color: #212529;
+  padding: 0 5px;
+}
+
+.schedule-game-vs {
+  font-weight: normal;
+  font-size: 0.9em;
+  color: #495057;
+  padding: 0 5px;
+}
+
+.schedule-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 25px;
+  padding: 10px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  gap: 15px;
+}
+
+.schedule-control-button {
+  background-color: #e9ecef;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.schedule-control-button:hover {
+  background-color: #ced4da;
+}
+
+.schedule-control-button svg {
+  fill: #343a40;
+}
+
+
+@media (max-width: 992px) {
+  .schedule-grid-container {
+    grid-template-columns: repeat(3, 1fr); 
+  }
+  .schedule-game-logo {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule-period-title {
+    font-size: 1.8em;
+  }
+  .schedule-grid-container {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 10px;
+  }
+  .schedule-day-column {
+    padding: 8px;
+  }
+  .schedule-game-logo {
+    width: 25px;
+    height: 25px;
+  }
+  .schedule-game-item {
+    padding: 6px;
+  }
+  .schedule-game-score, .schedule-game-vs {
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedule-period-title {
+    font-size: 1.5em;
+  }
+  .schedule-grid-container {
+    grid-template-columns: 1fr; 
+    gap: 8px;
+  }
+  .schedule-day-name {
+    font-size: 1em;
+  }
+  .schedule-controls {
+    gap: 10px;
+  }
+  .schedule-control-button {
+    width: 36px;
+    height: 36px;
+  }
+}
