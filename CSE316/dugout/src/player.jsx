@@ -10,6 +10,7 @@ const PlayerPage = () => {
     const [allPlayers, setAllPlayers] = useState([]);
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [hasSearched, setHasSearched] = useState(false);
+    const [selectedPlayerFromBest, setSelectedPlayerFromBest] = useState(null);
 
     useEffect(() => {
         const fetchLeaders = async () => {
@@ -75,7 +76,7 @@ const PlayerPage = () => {
     const handleSearchChange = (event) => {
         const value = event.target.value.toLowerCase();
         setSearchTerm(value);
-        const rawSuggestions = allPlayers.flatMap(p => [p.name, p.team]);
+        const rawSuggestions = allPlayers.flatMap(p => p.name);
         const unique = Array.from(new Set(rawSuggestions.filter(Boolean)))
             .filter(val => val.toLowerCase().startsWith(value))
             .slice(0, 10);
@@ -85,7 +86,7 @@ const PlayerPage = () => {
     const handleSearchSubmit = () => {
         const query = searchTerm.toLowerCase();
         const matched = allPlayers.find(p =>
-            p.name.toLowerCase() === query || p.team.toLowerCase() === query
+            p.name.toLowerCase() === query
         );
         setSelectedPlayer(matched || null);
         setHasSearched(true);
@@ -101,7 +102,7 @@ const PlayerPage = () => {
                 <input
                 type="text"
                 className="player-search-input"
-                placeholder="Search Players Name or Team"
+                placeholder="Search Players Name"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 onKeyDown={(e) => {
@@ -153,7 +154,7 @@ const PlayerPage = () => {
             )}
 
             {hasSearched && searchTerm && !selectedPlayer && (
-                <div className="no-search-result"><strong>No player found with that name or team.</strong></div>
+                <div className="no-search-result"><strong>No player found with that name.</strong></div>
             )}
 
             <div className="top-players-section">
@@ -187,14 +188,47 @@ const PlayerPage = () => {
                 <h2 className="best-player-title">Best Player</h2>
                 <div className="best-player-content">
                     <div className="best-player-list-by-position">
-                    {bestPlayers.map(player => (
-                        <div key={player.position} className="position-player-item">
-                        <span className="player-position">{player.position}</span>
-                        <span className="player-name-bp">{player.name} ({player.team}) - WAR {player.war?.toFixed(1)}</span>
-                        </div>
-                    ))}
+                        {bestPlayers.map(player => (
+                            <div
+                            key={player.position}
+                            className="position-player-item"
+                            onClick={() => {
+                                const matched = allPlayers.find(p => p.name === player.name);
+                                if (matched) {
+                                setSelectedPlayerFromBest(matched);
+                                }
+                            }}
+                            style={{ cursor: "pointer" }}
+                            >
+                            <span className="player-position">{player.position}</span>
+                            <span className="player-name-bp">
+                                {player.name} ({player.team}) - WAR {player.war?.toFixed(1)}
+                            </span>
+                            </div>
+                        ))}
                     </div>
-                    <div className="baseball-diamond-placeholder"></div>
+                    <div className="baseball-diamond-placeholder">
+                        {selectedPlayerFromBest ? (
+                            <div className="search-player-info">
+                            <p><strong>Name:</strong> {selectedPlayerFromBest.name}</p>
+                            <p><strong>Team:</strong> {selectedPlayerFromBest.team}</p>
+                            {selectedPlayerFromBest.position && <p><strong>Position:</strong> {selectedPlayerFromBest.position}</p>}
+                            {selectedPlayerFromBest.war && <p><strong>WAR:</strong> {selectedPlayerFromBest.war.toFixed(1)}</p>}
+                            {selectedPlayerFromBest.era && <p><strong>ERA:</strong> {selectedPlayerFromBest.era}</p>}
+                            {selectedPlayerFromBest.avg && <p><strong>AVG:</strong> {selectedPlayerFromBest.avg.toFixed(3)}</p>}
+                            {selectedPlayerFromBest.hr && <p><strong>HR:</strong> {selectedPlayerFromBest.hr}</p>}
+                            {selectedPlayerFromBest.rbi && <p><strong>RBI:</strong> {selectedPlayerFromBest.rbi}</p>}
+                            {selectedPlayerFromBest.so && <p><strong>SO:</strong> {selectedPlayerFromBest.so}</p>}
+                            {selectedPlayerFromBest.ip && <p><strong>IP:</strong> {selectedPlayerFromBest.ip}</p>}
+                            {selectedPlayerFromBest.battingScore && <p><strong>Batting Score:</strong> {selectedPlayerFromBest.battingScore.toFixed(1)}</p>}
+                            {selectedPlayerFromBest.pitcherScore && <p><strong>Pitching Score:</strong> {selectedPlayerFromBest.pitcherScore.toFixed(1)}</p>}
+                            </div>
+                        ) : (
+                            <div className="search-player-info" style={{ color: '#888', fontStyle: 'italic' }}>
+                            Click a player to see details.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
