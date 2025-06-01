@@ -1,12 +1,16 @@
 from flask import Flask, Response
 from selenium import webdriver
+from flask_cors import CORS
+
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import json
 import time
 
+
 app = Flask(__name__)
+CORS(app) 
 
 # 한글 → 영문 팀명 매핑
 team_name_map = {
