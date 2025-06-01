@@ -1,4 +1,3 @@
-
 .home-page-container {
 }
 
@@ -14,6 +13,7 @@
   align-items: center;
   justify-content: center;
   position: relative; 
+  background-color: var(--primary-color);
 }
 
 .hero-section::before {
@@ -39,6 +39,15 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
+.hero-content h1::after {
+  content: "";
+  display: block;
+  width: 120px;
+  height: 4px;
+  margin: 10px auto 0;
+  background-color: var(--primary-color);
+}
+
 .hero-content p {
   font-size: 1.3em;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
@@ -56,6 +65,7 @@
   margin-bottom: 30px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 2px solid var(--accent-color);
 }
 
 .main-content-area section h2 {
@@ -71,6 +81,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
   gap: 15px;
+  border: 2px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 10px;
 }
 
 .team-rank-item {
@@ -109,7 +122,7 @@
   flex: 1;
   display: flex; 
   background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
+  border: 2px solid var(--accent-color);
   border-radius: 6px;
   overflow: hidden; 
 }
@@ -117,7 +130,7 @@
 .stats-title-vertical {
   writing-mode: vertical-rl; 
   transform: rotate(180deg); 
-  background-color: #343a40; 
+  background-color: var(--primary-color); 
   color: white;
   padding: 10px; 
   font-size: 1.1em;
@@ -147,6 +160,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
+  border: 2px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 10px;
 }
 
 .game-score-card {
@@ -155,7 +171,7 @@
   justify-content: space-between;
   padding: 15px;
   background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
+  border: 2px solid var(--primary-color);
   border-radius: 6px;
 }
 
@@ -163,12 +179,6 @@
   display: flex;
   align-items: center;
   gap: 8px; 
-}
-
-.game-team.home-team { 
-}
-
-.game-team.away-team {
 }
 
 .team-logo-small {
@@ -190,7 +200,7 @@
 .vs-separator {
   font-size: 1em;
   font-weight: bold;
-  color: #6c757d;
+  color: var(--primary-color);
   margin: 0 10px;
 }
 
@@ -203,7 +213,6 @@
   font-weight: bold;
 }
 
-
 @media (max-width: 768px) {
   .hero-content h1 {
     font-size: 2.2em;
@@ -214,14 +223,6 @@
 
   .player-stats-section {
     flex-direction: column; 
-  }
-  
-  .stats-column {
-  }
-  .stats-title-vertical {
-    
-  }
-  .stats-content-box {
   }
 }
 

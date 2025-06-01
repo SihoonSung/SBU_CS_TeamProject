@@ -51,7 +51,7 @@ nav{
   width: 100%;
   margin: 0 auto;
   padding: 1px 20px;
-  background-color: #333;
+  background-color: var(--primary-color);
 }
 .navbar {
   width: 90%;
@@ -61,6 +61,7 @@ nav{
   flex-direction: row;
   height: 30px;        
   list-style: none;
+  background-color: var(--primary-color);
 }
 .navbar li{
   height: 50px;
@@ -118,7 +119,8 @@ nav{
 @media(max-width: 850px){
   .hideOnMobile{
       display: none;
-  }.menu-button{
+  }
+  .menu-button{
       display: block;
   }
 }
@@ -127,27 +129,25 @@ nav{
 :root {
   --primary-color: #222;
   --background-color: #f9f9f9;
+  --accent-color: #999;
 }
 
 .default-theme {
   --primary-color: #222;
   --background-color: #f9f9f9;
+  --accent-color: #999;
 }
 
-.theme-ssg-landers { --primary-color: #9B2B24; }
-.theme-samsung-lions { --primary-color: #3178D4; }
-.theme-lg-twins { --primary-color: #C44151; }
-.theme-doosan-bears { --primary-color: #0F0B2A; }
-.theme-kt-wiz { --primary-color: #1F1F1F; }
-.theme-lotte-giants { --primary-color: #C92931; }
-.theme-nc-dinos { --primary-color: #0D2559; }
-.theme-kia-tigers { --primary-color: #E68045; }
-.theme-hanwha-eagles { --primary-color: #2B4A84; }
-.theme-kiwoom-heroes { --primary-color: #6B1422; }
-
-.navbar, .hero-section, .dropdown-menu {
-  background-color: var(--primary-color);
-}
+.theme-ssg-landers { --primary-color: #9B2B24; --accent-color: #9B2B24; }
+.theme-samsung-lions { --primary-color: #3178D4; --accent-color: #3178D4; }
+.theme-lg-twins { --primary-color: #C44151; --accent-color: #C44151; }
+.theme-doosan-bears { --primary-color: #0F0B2A; --accent-color: #0F0B2A; }
+.theme-kt-wiz { --primary-color: #1F1F1F; --accent-color: #1F1F1F; }
+.theme-lotte-giants { --primary-color: #C92931; --accent-color: #C92931; }
+.theme-nc-dinos { --primary-color: #0D2559; --accent-color: #0D2559; }
+.theme-kia-tigers { --primary-color: #E68045; --accent-color: #E68045; }
+.theme-hanwha-eagles { --primary-color: #2B4A84; --accent-color: #2B4A84; }
+.theme-kiwoom-heroes { --primary-color: #6B1422; --accent-color: #6B1422; }
 
 .dropdown-toggle, .team-name, a {
   color: var(--primary-color);
@@ -168,4 +168,25 @@ button:hover {
 
 .menu-button svg {
   fill: var(--primary-color);
+}
+
+/* Themed Sections */
+.section-box,
+.stats-column,
+.team-list-container,
+.live-games-grid,
+.game-score-card {
+  border: 2px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 10px;
+  background-color: white;
+}
+
+.hero-content h1::after {
+  content: "";
+  display: block;
+  width: 120px;
+  height: 4px;
+  margin: 10px auto 0;
+  background-color: var(--primary-color);
 }
