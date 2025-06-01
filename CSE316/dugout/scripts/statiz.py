@@ -278,12 +278,9 @@ for _, row in df_pitching.iterrows():
         l = int(float(row.get("L", 0)))
         ip = float(row.get("IP", 0))
         so = int(float(row.get("SO", 0)))
-
         score = war * 10 + w * 2 + sv * 1.5 + hld * 1.5 - era
-
         english_name = translate_korean_to_english(row.get("Name", ""), api_key)
         time.sleep(0.2)
-
         cursor.execute("""
             INSERT INTO pitchers (name, team, war, g, w, l, era, ip, so, sv, hld, pitcherScore)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)

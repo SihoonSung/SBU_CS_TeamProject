@@ -159,6 +159,17 @@ function EstimateSystem() {
                     ))}
                 </ul>
             </div>
+            <div className="scoring-description">
+                <h2>Scoring System</h2>
+                <ul style={{ listStyle: "none" }}>
+                    <li><strong>Batting Score:</strong> HR × 6 + RBI × 1.2 + WAR × 12</li>
+                    <li><strong>Pitching Score:</strong> WAR × 10 + Wins × 2 + Saves × 1.5 + Holds × 1.5 − ERA</li>
+                    <li><strong>Fielding Score:</strong> dWAR − Errors × 1 + Assists × 0.05 + Putouts × 0.05</li>
+                    <li><strong>Pitcher:</strong> Only by Pitching Score</li>
+                    <li><strong>DH:</strong> Only by Batting Score</li>
+                    <li><strong>Fielders:</strong> Batting Score + Fielding Score</li>
+                </ul>
+            </div>
         </div>
     );
 }
