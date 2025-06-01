@@ -3,22 +3,20 @@ import './estimate_system.css';
 
 const mergePlayerData = (batting, pitching, fielding) => {
     const merged = {};
-
     const insert = (player, type) => {
         const key = player.name;
+        const extractedPosition = player.team?.split(' ')[1] ?? '';
         if (!merged[key]) {
             merged[key] = { 
                 name: player.name, 
-                uniform: player.uniform || '--', 
-                position: player.position || '', 
-                primaryPosition: player.primaryPosition || player.position || '' 
+                position: extractedPosition,
+                primaryPosition: extractedPosition
             };
         }
-
         if (type === 'batting') {
             merged[key] = { 
                 ...merged[key], 
-                battingScore: player.battingScore,
+                battingScore: player.battingScore ?? 0,
                 plateAppearances: player.pa,
                 atBats: player.ab
             };
@@ -35,15 +33,13 @@ const mergePlayerData = (batting, pitching, fielding) => {
             merged[key] = { 
                 ...merged[key], 
                 fieldingInnings: player.inn,
-                fieldingScore: player.fieldingScore
+                fieldingScore: player.fieldingScore ?? 0
             };
         }
     };
-
     batting.forEach(p => insert(p, 'batting'));
     pitching.forEach(p => insert(p, 'pitching'));
     fielding.forEach(p => insert(p, 'fielding'));
-
     return Object.values(merged);
 };
 
@@ -59,13 +55,13 @@ function EstimateSystem() {
                     fetch('http://localhost:3001/api/players?type=pitching'),
                     fetch('http://localhost:3001/api/players?type=fielding'),
                 ]);
-
                 const [battingData, pitchingData, fieldingData] = await Promise.all([
                     battingRes.json(),
                     pitchingRes.json(),
                     fieldingRes.json(),
                 ]);
-
+                console.log("Batting Sample:", JSON.stringify(battingData[0], null, 2));
+                console.log("Fielding Sample:", JSON.stringify(fieldingData[0], null, 2));
                 const mergedPlayers = mergePlayerData(battingData, pitchingData, fieldingData);
                 setPlayers(mergedPlayers);
                 setGoldenGloves(estimateGoldenGloves(mergedPlayers));
@@ -73,47 +69,39 @@ function EstimateSystem() {
                 console.error("Data fetch error:", err);
             }
         };
-
         fetchAll();
     }, []);
 
     const estimateGoldenGloves = (players) => {
         const positions = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'];
         const selected = {};
-
         for (const pos of positions) {
             const eligible = players.filter(p => isEligible(p, pos));
-
             if (pos === 'P') {
-                eligible.sort((a, b) => b.wins - a.wins || a.era - b.era);
+                eligible.sort((a, b) => (b.wins || 0) - (a.wins || 0) || (a.era || 99) - (b.era || 99));
             } else if (pos === 'DH') {
-                eligible.sort((a, b) => b.battingScore - a.battingScore);
+                eligible.sort((a, b) => (b.battingScore || 0) - (a.battingScore || 0));
             } else {
                 eligible.sort((a, b) => 
-                    (b.fieldingScore + b.battingScore) - 
-                    (a.fieldingScore + a.battingScore)
+                    ((b.fieldingScore || 0) + (b.battingScore || 0)) -
+                    ((a.fieldingScore || 0) + (a.battingScore || 0))
                 );
             }
-
             selected[pos] = eligible[0];
         }
-
         return selected;
     };
 
     const isEligible = (p, pos) => {
         if (p.position !== pos) return false;
-
         if (pos === 'P') {
-            return p.innings >= 100 && (p.wins >= 10 || p.saves >= 30 || p.holds >= 30);
+            return (p.innings || 0) >= 100 && ((p.wins || 0) >= 10 || (p.saves || 0) >= 30 || (p.holds || 0) >= 30);
         }
-
         if (pos === 'DH') {
             const isPrimaryFielder = ['C','1B','2B','3B','SS','LF','CF','RF'].includes(p.primaryPosition);
-            return !isPrimaryFielder && (p.plateAppearances >= 2/3 * 445 || p.atBats >= 297);
+            return !isPrimaryFielder && ((p.plateAppearances || 0) >= 297 || (p.atBats || 0) >= 297);
         }
-
-        return p.fieldingInnings >= (144 * 5); // 720 innings
+        return (p.fieldingInnings || 0) >= 720; // 144 * 5 innings
     };
 
     return (
@@ -136,7 +124,6 @@ function EstimateSystem() {
                         <div className="player-text">
                             <div className="pos-label">{pos}</div>
                             <div className="name">{shortName(player?.name)}</div>
-                            <div className="number">{player?.uniform}</div>
                         </div>
                     </div>
                 ))}
@@ -155,9 +142,12 @@ function EstimateSystem() {
 
 function shortName(fullName) {
     if (!fullName) return 'N/A';
-    const parts = fullName.split(' ');
-    if (parts.length === 1) return parts[0];
-    return `${parts[0][0]} ${parts.slice(1).join(' ')}`.toUpperCase();
+    // if (/^[A-Za-z\s]+$/.test(fullName)) {
+    //     const parts = fullName.trim().split(' ');
+    //     if (parts.length === 1) return parts[0];
+    //     return `${parts[0][0]} ${parts.slice(1).join(' ')}`.toUpperCase();
+    // }
+    return fullName;
 }
 
 export default EstimateSystem;

@@ -56,11 +56,6 @@
     font-size: 14px;
 }
 
-.player-text .number {
-    font-size: 20px;
-    margin-top: 2px;
-}
-
 .pos-CF { top: 0px; left: 210px; }
 .pos-LF { top: 50px; left: -20px; }
 .pos-RF { top: 50px; left: 420px; }
