@@ -33,3 +33,9 @@ second /SBU_CS_TeamProject/CSE316/dugout/server node index.js,
 and then /SBU_CS_TeamProject/CSE316/dugout/scripts in here you have to activate 
 virtual environment by source venv/bin/activate and then 
 FLASK_APP=score.py flask run --host=0.0.0.0 --port=5001
+
+We have to crawl data from the site(NAVER), and it takes some time to show out
+Live games, and Schedules part. 
+
+Also, on Mondays it the database does not show since there is no games.
+In tuesdays it will show up. 
