@@ -10,18 +10,50 @@ load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 name_cache = {}
 
+foreigner_name_dict = {
+    "네일": "James Naile",
+    "올러": "Adam Oller",
+    "위즈덤": "Patrick Wisdom",
+    "레예스": "Denyi Reyes",
+    "디아즈": "Lewin Diaz",
+    "후라도": "Airel Jurado",
+    "오스틴": "Austin Dean",
+    "에르난데스": "Elieser Hernandez",
+    "치리노스": "Yonny Chirinos",
+    "콜어빈": "Cole Irvin",
+    "케이브": "Jake Cave",
+    "잭로그": "Zach Logue",
+    "쿠에바스": "William Cuevas",
+    "로하스": "Mel Rojas Jr.",
+    "헤이수스": "Enmanuel De Jesus",
+    "에레디아": "Guillermo Heredia",
+    "앤더슨": "Drew Anderson",
+    "화이트": "Mitch White",
+    "레이예스": "Victor Reyes",
+    "감보아": "Alec Gamboa",
+    "데이비슨": "Tucker Davidson",
+    "와이스": "Ryan Weiss",
+    "플로리얼": "Estevan Florial",
+    "폰세": "Cody Ponce",
+    "라일리": "Riley Thompson",
+    "로건": "Logan Allen",
+    "카디네스": "Ruben Cardenas",
+    "로젠버그": "Kenny Rosenberg",
+    "알칸타라": "Raul Alcantara"
+}
+
 def translate_korean_to_english(text, api_key):
+    if text in foreigner_name_dict:
+        return foreigner_name_dict[text]
     if text in name_cache:
         return name_cache[text]
     try:
-        url = "https://translation.googleapis.com/language/translate/v2"
+        url = f"https://translation.googleapis.com/language/translate/v2?key={api_key}"
         headers = {"Content-Type": "application/json"}
         body = {
             "q": text,
-            "source": "ko",
             "target": "en",
-            "format": "text",
-            "key": api_key
+            "format": "text"
         }
         response = requests.post(url, headers=headers, json=body)
         response.raise_for_status()
