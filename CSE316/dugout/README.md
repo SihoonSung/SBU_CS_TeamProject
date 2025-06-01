@@ -25,3 +25,4 @@ brew install --cask chromedriver
 source /Users/minguhwang/Documents/GitHub/SBU_CS_TeamProject/venv/bin/activate
 pip install python-dotenv
 pip install requests
+http://localhost:5001/live-scores
