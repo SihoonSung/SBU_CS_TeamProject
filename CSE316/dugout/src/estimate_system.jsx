@@ -1,17 +1,80 @@
 import React, { useEffect, useState } from 'react';
 import './estimate_system.css';
 
+const mergePlayerData = (batting, pitching, fielding) => {
+    const merged = {};
+
+    const insert = (player, type) => {
+        const key = player.name;
+        if (!merged[key]) {
+            merged[key] = { 
+                name: player.name, 
+                uniform: player.uniform || '--', 
+                position: player.position || '', 
+                primaryPosition: player.primaryPosition || player.position || '' 
+            };
+        }
+
+        if (type === 'batting') {
+            merged[key] = { 
+                ...merged[key], 
+                battingScore: player.battingScore,
+                plateAppearances: player.pa,
+                atBats: player.ab
+            };
+        } else if (type === 'pitching') {
+            merged[key] = { 
+                ...merged[key], 
+                innings: player.ip,
+                wins: player.w,
+                saves: player.sv,
+                holds: player.hld,
+                era: player.era
+            };
+        } else if (type === 'fielding') {
+            merged[key] = { 
+                ...merged[key], 
+                defensiveInnings: player.inn,
+                defensiveScore: player.defensiveScore
+            };
+        }
+    };
+
+    batting.forEach(p => insert(p, 'batting'));
+    pitching.forEach(p => insert(p, 'pitching'));
+    fielding.forEach(p => insert(p, 'fielding'));
+
+    return Object.values(merged);
+};
+
 function EstimateSystem() {
     const [players, setPlayers] = useState([]);
     const [goldenGloves, setGoldenGloves] = useState({});
 
     useEffect(() => {
-        fetch('http://localhost:3001/api/players')
-        .then(res => res.json())
-        .then(data => {
-            setPlayers(data);
-            setGoldenGloves(estimateGoldenGloves(data));
-        });
+        const fetchAll = async () => {
+            try {
+                const [battingRes, pitchingRes, fieldingRes] = await Promise.all([
+                    fetch('http://localhost:3001/api/players?type=batting'),
+                    fetch('http://localhost:3001/api/players?type=pitching'),
+                    fetch('http://localhost:3001/api/players?type=fielding'),
+                ]);
+
+                const [battingData, pitchingData, fieldingData] = await Promise.all([
+                    battingRes.json(),
+                    pitchingRes.json(),
+                    fieldingRes.json(),
+                ]);
+
+                const mergedPlayers = mergePlayerData(battingData, pitchingData, fieldingData);
+                setPlayers(mergedPlayers);
+                setGoldenGloves(estimateGoldenGloves(mergedPlayers));
+            } catch (err) {
+                console.error("Data fetch error:", err);
+            }
+        };
+
+        fetchAll();
     }, []);
 
     const estimateGoldenGloves = (players) => {
@@ -19,17 +82,20 @@ function EstimateSystem() {
         const selected = {};
 
         for (const pos of positions) {
-        const eligible = players.filter(p => isEligible(p, pos));
+            const eligible = players.filter(p => isEligible(p, pos));
 
-        if (pos === 'P') {
-            eligible.sort((a, b) => b.wins - a.wins || a.era - b.era);
-        } else if (pos === 'DH') {
-            eligible.sort((a, b) => b.battingScore - a.battingScore);
-        } else {
-            eligible.sort((a, b) => (b.defensiveScore + b.battingScore) - (a.defensiveScore + a.battingScore));
-        }
+            if (pos === 'P') {
+                eligible.sort((a, b) => b.wins - a.wins || a.era - b.era);
+            } else if (pos === 'DH') {
+                eligible.sort((a, b) => b.battingScore - a.battingScore);
+            } else {
+                eligible.sort((a, b) => 
+                    (b.defensiveScore + b.battingScore) - 
+                    (a.defensiveScore + a.battingScore)
+                );
+            }
 
-        selected[pos] = eligible[0];
+            selected[pos] = eligible[0];
         }
 
         return selected;
@@ -39,12 +105,12 @@ function EstimateSystem() {
         if (p.position !== pos) return false;
 
         if (pos === 'P') {
-        return p.innings >= 100 && (p.wins >= 10 || p.saves >= 30 || p.holds >= 30);
+            return p.innings >= 100 && (p.wins >= 10 || p.saves >= 30 || p.holds >= 30);
         }
 
         if (pos === 'DH') {
-        const isPrimaryFielder = ['C','1B','2B','3B','SS','LF','CF','RF'].includes(p.primaryPosition);
-        return !isPrimaryFielder && (p.plateAppearances >= 2/3 * 445 || p.atBats >= 297);
+            const isPrimaryFielder = ['C','1B','2B','3B','SS','LF','CF','RF'].includes(p.primaryPosition);
+            return !isPrimaryFielder && (p.plateAppearances >= 2/3 * 445 || p.atBats >= 297);
         }
 
         return p.defensiveInnings >= (144 * 5); // 720 innings
@@ -70,7 +136,7 @@ function EstimateSystem() {
                         <div className="player-text">
                             <div className="pos-label">{pos}</div>
                             <div className="name">{shortName(player?.name)}</div>
-                            <div className="number">{player?.uniform || '--'}</div>
+                            <div className="number">{player?.uniform}</div>
                         </div>
                     </div>
                 ))}
@@ -78,14 +144,14 @@ function EstimateSystem() {
             <div className="summary">
                 <h2>Golden Glove Estimate Summary</h2>
                 <ul>
-                {Object.entries(goldenGloves).map(([pos, player]) => (
-                    <li key={pos}>{pos}	{player?.name || 'N/A'}</li>
-                ))}
+                    {Object.entries(goldenGloves).map(([pos, player]) => (
+                        <li key={pos}>{pos} {player?.name || 'N/A'}</li>
+                    ))}
                 </ul>
             </div>
         </div>
     );
-};
+}
 
 function shortName(fullName) {
     if (!fullName) return 'N/A';
