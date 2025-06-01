@@ -234,7 +234,7 @@ app.get('/api/players', async (req, res) => {
     let tableName;
     if (type === 'batting') tableName = 'batters';
     else if (type === 'pitching') tableName = 'pitchers';
-    else if (type === 'fielding') tableName = 'defenders';
+    else if (type === 'fielding') tableName = 'fielders';
     else return res.status(400).json({ message: "Invalid type parameter" });
     try {
         const [rows] = await pool.query(`SELECT * FROM ${tableName}`);
