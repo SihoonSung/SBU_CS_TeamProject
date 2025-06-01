@@ -65,7 +65,12 @@ def get_live_scores():
             }
             results.append(result)
 
+
     return Response(
         json.dumps(results, ensure_ascii=False),
         content_type="application/json"
     )
+    
+    
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5001)
