@@ -56,6 +56,15 @@
     font-size: 14px;
 }
 
+.player-text .name {
+    font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    overflow: visible;
+    white-space: nowrap;
+}
+
 .pos-CF { top: 0px; left: 210px; }
 .pos-LF { top: 50px; left: -20px; }
 .pos-RF { top: 50px; left: 420px; }

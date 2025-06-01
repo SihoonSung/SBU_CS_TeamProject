@@ -230,17 +230,25 @@ app.get("/api/posts/:id/comments", async (req, res) => {
 });
 
 app.get('/api/players', async (req, res) => {
-    const type = req.query.type || 'batting';
+    const type = req.query.type;
+    const position = req.query.position;
     let tableName;
-    if (type === 'batting') tableName = 'batters';
-    else if (type === 'pitching') tableName = 'pitchers';
-    else if (type === 'fielding') tableName = 'fielders';
-    else return res.status(400).json({ message: "Invalid type parameter" });
+    if (type === 'pitching') {
+        tableName = 'pitchers';
+    } else if ((type === 'batting' || type === 'fielding') && position) {
+        const validPositions = ['C','1B','2B','3B','SS','LF','CF','RF','DH'];
+        if (!validPositions.includes(position)) {
+            return res.status(400).json({ message: "Invalid position parameter" });
+        }
+        tableName = `${type === 'batting' ? 'batters' : 'fielders'}_${position}`;
+    } else {
+        return res.status(400).json({ message: "Missing or invalid query parameters" });
+    }
     try {
         const [rows] = await pool.query(`SELECT * FROM ${tableName}`);
         res.json(rows);
     } catch (error) {
-        console.error("Error fetching players:", error);
+        console.error(`Error fetching players from ${tableName}:`, error);
         res.status(500).json({ message: "Database error." });
     }
 });

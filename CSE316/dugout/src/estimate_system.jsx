@@ -4,8 +4,9 @@ import './estimate_system.css';
 const mergePlayerData = (batting, pitching, fielding) => {
     const merged = {};
     const insert = (player, type) => {
+        const teamTokens = (player.team || '').trim().split(/\s+/);
+        const extractedPosition = player.team?.match(/\b(C|1B|2B|3B|SS|LF|CF|RF|DH|P)\b/)?.[1] ?? '';
         const key = player.name;
-        const extractedPosition = player.team?.split(' ')[1] ?? '';
         if (!merged[key]) {
             merged[key] = { 
                 name: player.name, 
@@ -16,7 +17,7 @@ const mergePlayerData = (batting, pitching, fielding) => {
         if (type === 'batting') {
             merged[key] = { 
                 ...merged[key], 
-                battingScore: player.battingScore ?? 0,
+                battingScore: player.battingScore,
                 plateAppearances: player.pa,
                 atBats: player.ab
             };
@@ -27,7 +28,8 @@ const mergePlayerData = (batting, pitching, fielding) => {
                 wins: player.w,
                 saves: player.sv,
                 holds: player.hld,
-                era: player.era
+                era: player.era,
+                pitcherScore: player.pitcherScore
             };
         } else if (type === 'fielding') {
             merged[key] = { 
@@ -50,19 +52,29 @@ function EstimateSystem() {
     useEffect(() => {
         const fetchAll = async () => {
             try {
-                const [battingRes, pitchingRes, fieldingRes] = await Promise.all([
-                    fetch('http://localhost:3001/api/players?type=batting'),
-                    fetch('http://localhost:3001/api/players?type=pitching'),
-                    fetch('http://localhost:3001/api/players?type=fielding'),
+                const battingPositions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'];
+                const fieldingPositions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'];
+                const battingFetches = battingPositions.map(pos =>
+                    fetch(`http://localhost:3001/api/players?type=batting&position=${pos}`)
+                        .then(res => res.json())
+                        .then(data => data.map(p => ({ ...p, position: pos })))
+                );
+                const fieldingFetches = fieldingPositions.map(pos =>
+                    fetch(`http://localhost:3001/api/players?type=fielding&position=${pos}`)
+                        .then(res => res.json())
+                        .then(data => data.map(p => ({ ...p, position: pos })))
+                );
+                const [pitchingRes, ...battingAndFielding] = await Promise.all([
+                    fetch('http://localhost:3001/api/players?type=pitching').then(res => res.json()),
+                    ...battingFetches,
+                    ...fieldingFetches,
                 ]);
-                const [battingData, pitchingData, fieldingData] = await Promise.all([
-                    battingRes.json(),
-                    pitchingRes.json(),
-                    fieldingRes.json(),
-                ]);
-                console.log("Batting Sample:", JSON.stringify(battingData[0], null, 2));
-                console.log("Fielding Sample:", JSON.stringify(fieldingData[0], null, 2));
-                const mergedPlayers = mergePlayerData(battingData, pitchingData, fieldingData);
+                const battingData = battingAndFielding.slice(0, battingPositions.length).flat();
+                const fieldingData = battingAndFielding.slice(battingPositions.length).flat();
+                const mergedPlayers = mergePlayerData(battingData, pitchingRes, fieldingData);
+                console.log("🎯 Pitchers only:",
+                    mergedPlayers.filter(p => p.position === 'P')
+                );
                 setPlayers(mergedPlayers);
                 setGoldenGloves(estimateGoldenGloves(mergedPlayers));
             } catch (err) {
@@ -78,30 +90,59 @@ function EstimateSystem() {
         for (const pos of positions) {
             const eligible = players.filter(p => isEligible(p, pos));
             if (pos === 'P') {
-                eligible.sort((a, b) => (b.wins || 0) - (a.wins || 0) || (a.era || 99) - (b.era || 99));
+                eligible.sort((a, b) => parseFloat(b.pitcherScore || 0) - parseFloat(a.pitcherScore || 0));
+                console.log("Sorted Pitchers:", eligible.map(p => [p.name, p.pitcherScore]));
             } else if (pos === 'DH') {
                 eligible.sort((a, b) => (b.battingScore || 0) - (a.battingScore || 0));
+                console.log("Sorted DHs:", eligible.map(p => [p.name, p.battingScore]));
             } else {
                 eligible.sort((a, b) => 
                     ((b.fieldingScore || 0) + (b.battingScore || 0)) -
                     ((a.fieldingScore || 0) + (a.battingScore || 0))
                 );
+                console.log(`Sorted ${pos}s:`, eligible.map(p => [
+                    p.name, 
+                    `fielding: ${p.fieldingScore || 0}`, 
+                    `batting: ${p.battingScore || 0}`, 
+                    `total: ${(p.fieldingScore || 0) + (p.battingScore || 0)}`
+                ]));
             }
             selected[pos] = eligible[0];
         }
         return selected;
     };
 
+    // const isEligible = (p, pos) => {
+    //     if (!p || !p.position) return false;
+    //     const normalizedPosition = (p.position || '').toUpperCase().trim();
+    //     if (normalizedPosition !== pos) return false;
+    //     if (pos === 'P') {
+    //         return (p.innings || 0) >= 100 && (
+    //             (p.wins || 0) >= 10 || (p.saves || 0) >= 30 || (p.holds || 0) >= 30
+    //         );
+    //     }
+    //     if (pos === 'DH') {
+    //         const isPrimaryFielder = ['C','1B','2B','3B','SS','LF','CF','RF'].includes(
+    //             (p.primaryPosition || '').toUpperCase().trim()
+    //         );
+    //         return !isPrimaryFielder && ((p.plateAppearances || 0) >= 297 || (p.atBats || 0) >= 297);
+    //     }
+    //     return (p.fieldingInnings || 0) >= 720;
+    // };
+
     const isEligible = (p, pos) => {
-        if (p.position !== pos) return false;
+        if (!p || !p.position) return false;
+        const normalizedPosition = (p.position || '').toUpperCase().trim();
+        if (normalizedPosition !== pos) return false;
         if (pos === 'P') {
-            return (p.innings || 0) >= 100 && ((p.wins || 0) >= 10 || (p.saves || 0) >= 30 || (p.holds || 0) >= 30);
+            return (p.pitcherScore || 0) > 0;
         }
         if (pos === 'DH') {
-            const isPrimaryFielder = ['C','1B','2B','3B','SS','LF','CF','RF'].includes(p.primaryPosition);
-            return !isPrimaryFielder && ((p.plateAppearances || 0) >= 297 || (p.atBats || 0) >= 297);
+            const primary = (p.primaryPosition || '').toUpperCase().trim();
+            const isPrimaryFielder = ['C','1B','2B','3B','SS','LF','CF','RF'].includes(primary);
+            return !isPrimaryFielder && ((p.plateAppearances || 0) > 0 || (p.atBats || 0) > 0);
         }
-        return (p.fieldingInnings || 0) >= 720; // 144 * 5 innings
+        return (p.fieldingInnings || 0) > 0 || (p.battingScore || 0) > 0;
     };
 
     return (
