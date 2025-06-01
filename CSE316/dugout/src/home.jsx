@@ -27,10 +27,24 @@ const translateStatus = (status) => {
 };
 
 const Home = () => {
+  const [kboTeams, setKboTeams] = useState([]);
   const [topPitchers, setTopPitchers] = useState([]);
   const [topBatters, setTopBatters] = useState([]);
   const [liveGames, setLiveGames] = useState([]);
   const myTeam = localStorage.getItem("team");
+
+  useEffect(() => {
+    const fetchRankings = async () => {
+      try {
+        const res = await fetch("http://localhost:5001/team-rankings");
+        const data = await res.json();
+        setKboTeams(data);
+      } catch (err) {
+        console.error("Failed to fetch team rankings:", err);
+      }
+    };
+    fetchRankings();
+  }, []);
 
   useEffect(() => {
     const fetchLeaders = async () => {
@@ -49,7 +63,6 @@ const Home = () => {
       try {
         const res = await fetch("http://localhost:5001/live-scores");
         const data = await res.json();
-
         const mapped = data.map((game, idx) => ({
           id: idx,
           homeTeam: {
@@ -64,7 +77,6 @@ const Home = () => {
           },
           status: translateStatus(game.status)
         }));
-
         setLiveGames(mapped);
       } catch (err) {
         console.error("Live score fetch error:", err);
@@ -72,17 +84,9 @@ const Home = () => {
     };
 
     fetchLiveScores();
-    const interval = setInterval(fetchLiveScores, 300000); // 5분마다
+    const interval = setInterval(fetchLiveScores, 300000);
     return () => clearInterval(interval);
   }, []);
-
-  const kboTeams = [
-    { id: 1, rank: 1, name: 'SSG Landers', logoUrl: '/images/logos/ssg_landers.png' },
-    { id: 2, rank: 2, name: 'Samsung Lions', logoUrl: '/images/logos/samsung_lions.png' },
-    { id: 3, rank: 3, name: 'LG Twins', logoUrl: '/images/logos/lg_twins.png' },
-    { id: 4, rank: 4, name: 'KT Wiz', logoUrl: '/images/logos/kt_wiz.png' },
-    { id: 5, rank: 5, name: 'KIA Tigers', logoUrl: '/images/logos/kia_tigers.png' }
-  ];
 
   return (
     <div className="home-page-container">
@@ -98,10 +102,13 @@ const Home = () => {
           <h2>KBO Team Ranking</h2>
           <div className="team-list-container">
             {kboTeams.map((team) => (
-              <div key={team.id} className="team-rank-item">
+              <div key={team.rank} className="team-rank-item">
                 <img src={team.logoUrl} alt={`${team.name} logo`} className="team-logo" />
-                <span className="team-rank">{team.rank}</span>
-                <span className="team-name">{team.name}</span>
+                <div className="team-rank-info">
+                  <span className="team-rank">{team.rank}</span>
+                  <span className="team-name">{team.name}</span>
+                  <span className="team-gap">+{team.gap}games </span>
+                </div>
               </div>
             ))}
           </div>

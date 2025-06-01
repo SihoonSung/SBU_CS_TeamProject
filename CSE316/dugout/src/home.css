@@ -198,10 +198,10 @@
   font-weight: bold;
 }
 
-.highlight {
-  border: 2px solid #e74c3c;
-  box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
-  border-radius: 8px;
+.team-gap {
+  font-size: 0.75rem;
+  color: #777;
+  margin-left: 4px;
 }
 
 .vs-separator {

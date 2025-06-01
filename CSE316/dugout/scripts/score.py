@@ -9,11 +9,11 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import json
 import time
+import requests
 
 app = Flask(__name__)
 CORS(app)
 
-# 한글 → 영문 팀명 매핑
 team_name_map = {
     "두산": "Doosan Bears",
     "키움": "Kiwoom Heroes",
@@ -27,26 +27,24 @@ team_name_map = {
     "롯데": "Lotte Giants"
 }
 
-# 특정 날짜의 경기 데이터 크롤링
-def crawl_scores_for_date(date_str):
+def create_driver():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    service = Service("/opt/homebrew/bin/chromedriver") 
+    return webdriver.Chrome(service=service, options=chrome_options)
 
-    service = Service("/opt/homebrew/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-
+def crawl_scores_for_date(date_str):
+    driver = create_driver()
     url = f"https://m.sports.naver.com/kbaseball/schedule/index?date={date_str}"
     driver.get(url)
     time.sleep(2)
 
-    html = driver.page_source
+    soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
 
-    soup = BeautifulSoup(html, "html.parser")
     match_boxes = soup.select(".MatchBox_match_item__3_D0Q")
-
     results = []
     for match in match_boxes:
         teams = match.select(".MatchBoxHeadToHeadArea_team__40JQL")
@@ -57,7 +55,6 @@ def crawl_scores_for_date(date_str):
         if len(teams) == 2:
             team1_kor = teams[0].text.strip()
             team2_kor = teams[1].text.strip()
-
             result = {
                 "team1": team_name_map.get(team1_kor, team1_kor),
                 "score1": scores[0].text.strip() if len(scores) == 2 else "",
@@ -70,39 +67,65 @@ def crawl_scores_for_date(date_str):
 
     return results
 
-# 오늘 날짜의 라이브 스코어 반환
 @app.route('/live-scores')
 def get_live_scores():
     today = datetime.today().strftime('%Y-%m-%d')
     results = crawl_scores_for_date(today)
+    return Response(json.dumps(results, ensure_ascii=False), content_type="application/json")
 
-    return Response(
-        json.dumps(results, ensure_ascii=False),
-        content_type="application/json"
-    )
-
-# 이번 주 화~일 주간 스케줄 반환
 @app.route('/weekly-schedule')
 def get_weekly_schedule():
     today = datetime.today()
-    weekday = today.weekday()  # 월=0, 화=1, ..., 일=6
-    start_date = today - timedelta(days=(weekday - 1))  # 화요일 시작
+    weekday = today.weekday()
+    start_date = today - timedelta(days=(weekday - 1)) 
 
     week_results = []
-
-    for i in range(6):  # 화~일
+    for i in range(6): 
         date = start_date + timedelta(days=i)
         date_str = date.strftime('%Y-%m-%d')
-        daily_results = crawl_scores_for_date(date_str)
+        games = crawl_scores_for_date(date_str)
         week_results.append({
             "date": date_str,
-            "games": daily_results
+            "games": games
         })
 
-    return Response(
-        json.dumps(week_results, ensure_ascii=False),
-        content_type="application/json"
-    )
+    return Response(json.dumps(week_results, ensure_ascii=False), content_type="application/json")
+
+@app.route('/team-rankings')
+def team_rankings():
+    import requests
+    from bs4 import BeautifulSoup
+
+    url = "https://www.koreabaseball.com/Record/TeamRank/TeamRankDaily.aspx"
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    res = requests.get(url, headers=headers)
+    soup = BeautifulSoup(res.text, "html.parser")
+    table = soup.select_one("table.tData")
+
+    results = []
+    if not table:
+        return Response(json.dumps(results, ensure_ascii=False), content_type="application/json")
+
+    rows = table.select("tbody tr")
+
+    for i, row in enumerate(rows, 1):
+        cols = row.select("td")
+        if len(cols) >= 10:
+            name_kor = cols[1].text.strip()
+            games_behind = cols[7].text.strip()
+            logo_src = f"/images/logos/{team_name_map.get(name_kor, name_kor).lower().replace(' ', '_')}.png"
+
+            results.append({
+                "rank": i,
+                "name": team_name_map.get(name_kor, name_kor),
+                "logoUrl": logo_src,
+                "gap": games_behind
+            })
+
+    return Response(json.dumps(results, ensure_ascii=False), content_type="application/json")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
