@@ -1,12 +1,70 @@
+from dotenv import load_dotenv
+import os
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import mysql.connector
+import time
+
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
+name_cache = {}
+
+def translate_korean_to_english(text, api_key):
+    if text in name_cache:
+        return name_cache[text]
+    try:
+        url = "https://translation.googleapis.com/language/translate/v2"
+        headers = {"Content-Type": "application/json"}
+        body = {
+            "q": text,
+            "source": "ko",
+            "target": "en",
+            "format": "text",
+            "key": api_key
+        }
+        response = requests.post(url, headers=headers, json=body)
+        response.raise_for_status()
+        result = response.json()
+        translated = result["data"]["translations"][0]["translatedText"]
+        name_cache[text] = translated
+        return translated
+    except Exception as e:
+        print(f"[Translate ERROR] {text} - {e}")
+        return text
+
 
 position_map = {
     'C': 'C', '1B': '1B', '2B': '2B', '3B': '3B', 'SS': 'SS',
     'LF': 'LF', 'CF': 'CF', 'RF': 'RF', 'DH': 'DH', 'P': 'P'
 }
+
+team_code_map = {
+    '5002': 'LG Twins',
+    '7002': 'Hanwha Eagles',
+    '9002': 'SSG Landers',
+    '6002': 'Doosan Bears',
+    '1001': 'Samsung Lions',
+    '2002': 'KIA Tigers',
+    '3001': 'Lotte Giants',
+    '12001': 'KT Wiz',
+    '11001': 'NC Dinos',
+    '10001': 'Kiwoom Heroes'
+}
+
+import re
+
+def extract_team_name_from_svg(html_element):
+    soup = BeautifulSoup(html_element, 'html.parser')
+    img_tag = soup.find('img', src=re.compile(r'/data/team/ci/2025/(\d+)\.svg'))
+    if not img_tag:
+        return 'Unknown'
+    match = re.search(r'/data/team/ci/2025/(\d+)\.svg', img_tag['src'])
+    if match:
+        team_code = match.group(1)
+        return team_code_map.get(team_code, 'Unknown')
+    return 'Unknown'
+
 
 def extract_table_data(url, columns, expected_col_count):
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -22,7 +80,10 @@ def extract_table_data(url, columns, expected_col_count):
         cols = row.find_all('td')
         if not cols:
             continue
+        team_html = str(cols[2])
+        team_name = extract_team_name_from_svg(team_html)
         row_data = [col.text.strip() for col in cols]
+        row_data[2] = team_name 
         if len(row_data) >= expected_col_count:
             data.append(row_data[:expected_col_count])
     return pd.DataFrame(data, columns=columns)
@@ -113,10 +174,12 @@ for pos, url in batting_urls.items():
             hr = int(row["HR"])
             rbi = int(row["RBI"])
             score = hr * 6 + rbi * 1.2 + war * 12
+            english_name = translate_korean_to_english(row["Name"], api_key)
+            time.sleep(0.2)
             cursor.execute(f"""
                 INSERT INTO batters_{pos} (name, team, war, pa, ab, hr, rbi, battingScore)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (row["Name"], row["Team"], war, pa, ab, hr, rbi, score))
+            """, (english_name, row["Team"], war, pa, ab, hr, rbi, score))
         except Exception as e:
             print(f"[Batters {pos} ERROR] {row['Name']} - {e}")
 
@@ -151,11 +214,13 @@ for _, row in df_pitching.iterrows():
         ip = float(row["IP"])
         so = int(row["SO"])
         score = war * 10 + w * 2 + sv * 1.5 + hld * 1.5 - era
+        english_name = translate_korean_to_english(row["Name"], api_key)
+        time.sleep(0.2)
         cursor.execute("""
             INSERT INTO pitchers (name, team, war, g, w, l, era, ip, so, sv, hld, pitcherScore)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            row["Name"], row["Team"], war, g, w, l, era, ip, so, sv, hld, score
+            english_name, row["Team"], war, g, w, l, era, ip, so, sv, hld, score
         ))
     except Exception as e:
         print(f"[Pitchers ERROR] {row['Name']} - {e}")
@@ -176,11 +241,13 @@ for pos, url in fielding_urls.items():
             po = int(row["PO"]) if row["PO"] != '' else 0
             dp = int(row["DP"]) if row["DP"] != '' else 0
             score = dwar- err * 1 + assists * 0.05 + po * 0.05
+            english_name = translate_korean_to_english(row["Name"], api_key)
+            time.sleep(0.2)
             cursor.execute(f"""
                 INSERT INTO fielders_{pos} (name, team, war, g, inn, dwar, err, assists, putouts, dp, fieldingScore)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                row["Name"], row["Team"], war, g, inn,
+                english_name, row["Team"], war, g, inn,
                 dwar, err, assists, po, dp, score
             ))
         except Exception as e:

@@ -183,11 +183,11 @@ function EstimateSystem() {
 
 function shortName(fullName) {
     if (!fullName) return 'N/A';
-    // if (/^[A-Za-z\s]+$/.test(fullName)) {
-    //     const parts = fullName.trim().split(' ');
-    //     if (parts.length === 1) return parts[0];
-    //     return `${parts[0][0]} ${parts.slice(1).join(' ')}`.toUpperCase();
-    // }
+    if (/^[A-Za-z\s]+$/.test(fullName)) {
+        const parts = fullName.trim().split(' ');
+        if (parts.length === 1) return parts[0];
+        return `${parts[0][0]} ${parts.slice(1).join(' ')}`.toUpperCase();
+    }
     return fullName;
 }
 
