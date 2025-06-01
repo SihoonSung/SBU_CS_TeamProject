@@ -272,9 +272,10 @@ app.get("/api/leaders/pitchers", async (req, res) => {
       FROM pitchers
       WHERE ip >= 50
       ORDER BY era ASC
-      LIMIT 3
+      LIMIT 5
     `);
-    res.json(rows);
+    const ranked = rows.map((p, i) => ({ ...p, rank: i + 1 }));
+    res.json(ranked);
   } catch (err) {
     console.error("Pitchers leader fetch error:", err);
     res.status(500).json({ message: "Server error" });
@@ -296,13 +297,34 @@ app.get("/api/leaders/batters", async (req, res) => {
       });
     }
     results.sort((a, b) => b.avg - a.avg);
-    const top3 = results.slice(0, 3).map(player => ({
-      ...player,
-      avg: player.avg.toFixed(3)
-    }));
-    res.json(top3);
+    const top5 = results.slice(0, 5).map((p, i) => ({ ...p, rank: i + 1 }));
+    res.json(top5);
   } catch (err) {
     console.error("Batters leader fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/api/leaders/best", async (req, res) => {
+  try {
+    const positions = ['P','C','1B','2B','3B','SS','LF','CF','RF','DH'];
+    const bestPlayers = [];
+    for (const pos of positions) {
+      const table = pos === 'P' ? 'pitchers' : `batters_${pos}`;
+      const [rows] = await pool.query(`
+        SELECT name, team, war
+        FROM ${table}
+        WHERE war IS NOT NULL
+        ORDER BY war DESC
+        LIMIT 1
+      `);
+      if (rows.length > 0) {
+        bestPlayers.push({ position: pos, name: rows[0].name, team: rows[0].team, war: parseFloat(rows[0].war)});
+      }
+    }
+    res.json(bestPlayers);
+  } catch (err) {
+    console.error("Best players fetch error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

@@ -68,25 +68,25 @@ const Home = () => {
                 <div className="stats-column pitcher-column">
                     <h3 className="stats-title-vertical">PITCHER</h3>
                     <div className="stats-content-box">
-                        {topPitchers.map((p, i) => (
-                        <p key={i}>
-                            {`${i + 1}. ${p.name} (${p.team}) - ERA ${parseFloat(p.era).toFixed(2)}`}
-                        </p>
+                        {topPitchers.slice(0, 3).map((p, i) => (
+                            <p key={i}>
+                                {`${i + 1}. ${p.name} (${p.team}) - ERA ${parseFloat(p.era).toFixed(2)}`}
+                            </p>
                         ))}
                     </div>
                 </div>
                 <div className="stats-column batter-column">
                     <h3 className="stats-title-vertical">BATTER</h3>
                     <div className="stats-content-box">
-                        {topBatters.map((b, i) => {
-                        const avg = parseFloat(b.avg);
-                        return (
-                            <p key={i}>
-                            {`${i + 1}. ${b.name} (${b.team}) - ${
-                                isNaN(avg) ? `HR ${b.hr ?? 0}` : `AVG ${avg.toFixed(3)}`
-                            }`}
-                            </p>
-                        );
+                        {topBatters.slice(0, 3).map((b, i) => {
+                            const avg = parseFloat(b.avg);
+                            return (
+                                <p key={i}>
+                                    {`${i + 1}. ${b.name} (${b.team}) - ${
+                                        isNaN(avg) ? `HR ${b.hr ?? 0}` : `AVG ${avg.toFixed(3)}`
+                                    }`}
+                                </p>
+                            );
                         })}
                     </div>
                 </div>
