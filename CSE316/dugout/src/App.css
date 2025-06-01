@@ -84,7 +84,7 @@ nav{
 .sidebar {
   position: relative; 
   width: 100%;
-  background-color: #E6E6FA;
+  background-color: white;
   display: none;
   flex-direction: column;
   padding: 10px 0;
@@ -110,9 +110,10 @@ nav{
 
 .menu-button{
   display: none;
-  padding: 0 30px;
   align-items: center;
   justify-content: center;
+  margin-left: auto;
+  padding: 0 30px;
   cursor: pointer;
 }
 
@@ -164,10 +165,6 @@ button {
 
 button:hover {
   opacity: 0.9;
-}
-
-.menu-button svg {
-  fill: var(--primary-color);
 }
 
 /* Themed Sections */
