@@ -14,6 +14,7 @@
   justify-content: center;
   position: relative;
   z-index: 2;
+  background-color: transparent;
 }
 
 .hero-section::before {
@@ -195,6 +196,12 @@
 .game-team .team-score {
   font-size: 1.2em;
   font-weight: bold;
+}
+
+.highlight {
+  border: 2px solid #e74c3c;
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
+  border-radius: 8px;
 }
 
 .vs-separator {

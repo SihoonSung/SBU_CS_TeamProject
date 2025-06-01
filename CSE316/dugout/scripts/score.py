@@ -1,3 +1,4 @@
+# score.py
 from flask import Flask, Response
 from selenium import webdriver
 from flask_cors import CORS
@@ -5,12 +6,12 @@ from flask_cors import CORS
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 import json
 import time
 
-
 app = Flask(__name__)
-CORS(app) 
+CORS(app)
 
 # 한글 → 영문 팀명 매핑
 team_name_map = {
@@ -26,8 +27,8 @@ team_name_map = {
     "롯데": "Lotte Giants"
 }
 
-@app.route('/live-scores')
-def get_live_scores():
+# 특정 날짜의 경기 데이터 크롤링
+def crawl_scores_for_date(date_str):
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
@@ -36,8 +37,10 @@ def get_live_scores():
     service = Service("/opt/homebrew/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    driver.get("https://m.sports.naver.com/kbaseball/schedule/index?date=2025-06-01")
-    time.sleep(3)
+    url = f"https://m.sports.naver.com/kbaseball/schedule/index?date={date_str}"
+    driver.get(url)
+    time.sleep(2)
+
     html = driver.page_source
     driver.quit()
 
@@ -51,26 +54,55 @@ def get_live_scores():
         status_tag = match.select_one(".MatchBox_status__2pbzi")
         stadium_tag = match.select_one(".MatchBox_stadium__13gft")
 
-        if len(teams) == 2 and len(scores) == 2:
+        if len(teams) == 2:
             team1_kor = teams[0].text.strip()
             team2_kor = teams[1].text.strip()
 
             result = {
                 "team1": team_name_map.get(team1_kor, team1_kor),
-                "score1": scores[0].text.strip(),
+                "score1": scores[0].text.strip() if len(scores) == 2 else "",
                 "team2": team_name_map.get(team2_kor, team2_kor),
-                "score2": scores[1].text.strip(),
+                "score2": scores[1].text.strip() if len(scores) == 2 else "",
                 "status": status_tag.text.strip() if status_tag else "",
                 "stadium": stadium_tag.text.strip() if stadium_tag else ""
             }
             results.append(result)
 
+    return results
+
+# 오늘 날짜의 라이브 스코어 반환
+@app.route('/live-scores')
+def get_live_scores():
+    today = datetime.today().strftime('%Y-%m-%d')
+    results = crawl_scores_for_date(today)
 
     return Response(
         json.dumps(results, ensure_ascii=False),
         content_type="application/json"
     )
-    
-    
+
+# 이번 주 화~일 주간 스케줄 반환
+@app.route('/weekly-schedule')
+def get_weekly_schedule():
+    today = datetime.today()
+    weekday = today.weekday()  # 월=0, 화=1, ..., 일=6
+    start_date = today - timedelta(days=(weekday - 1))  # 화요일 시작
+
+    week_results = []
+
+    for i in range(6):  # 화~일
+        date = start_date + timedelta(days=i)
+        date_str = date.strftime('%Y-%m-%d')
+        daily_results = crawl_scores_for_date(date_str)
+        week_results.append({
+            "date": date_str,
+            "games": daily_results
+        })
+
+    return Response(
+        json.dumps(week_results, ensure_ascii=False),
+        content_type="application/json"
+    )
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)

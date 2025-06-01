@@ -30,6 +30,7 @@ const Home = () => {
   const [topPitchers, setTopPitchers] = useState([]);
   const [topBatters, setTopBatters] = useState([]);
   const [liveGames, setLiveGames] = useState([]);
+  const myTeam = localStorage.getItem("team");
 
   useEffect(() => {
     const fetchLeaders = async () => {
@@ -71,7 +72,7 @@ const Home = () => {
     };
 
     fetchLiveScores();
-    const interval = setInterval(fetchLiveScores, 300000);
+    const interval = setInterval(fetchLiveScores, 300000); // 5분마다
     return () => clearInterval(interval);
   }, []);
 
@@ -85,10 +86,7 @@ const Home = () => {
 
   return (
     <div className="home-page-container">
-      <section
-        className="hero-section"
-        style={{ backgroundImage: "url('/images/background.png')" }}
-      >
+      <section className="hero-section" style={{ backgroundImage: "url('/images/background.png')" }}>
         <div className="hero-content">
           <h1>Welcome to Dugout</h1>
           <p>KBO Database Web</p>
@@ -141,32 +139,35 @@ const Home = () => {
           <h2>Live Games</h2>
           {liveGames.length > 0 ? (
             <div className="live-games-grid">
-              {liveGames.map((game) => (
-                <div key={game.id} className="game-score-card">
-                  <div className="game-team home-team">
-                    <img
-                      src={game.homeTeam.logoUrl}
-                      alt={`${game.homeTeam.name} logo`}
-                      className="team-logo-small"
-                      onError={(e) => { e.target.src = "/images/logos/default.png"; }}
-                    />
-                    <span className="team-name">{game.homeTeam.name}</span>
-                    <span className="team-score">{game.homeTeam.score}</span>
+              {liveGames.map((game) => {
+                const isMyTeam = game.homeTeam.name === myTeam || game.awayTeam.name === myTeam;
+                return (
+                  <div key={game.id} className={`game-score-card ${isMyTeam ? "highlight" : ""}`}>
+                    <div className="game-team home-team">
+                      <img
+                        src={game.homeTeam.logoUrl}
+                        alt={`${game.homeTeam.name} logo`}
+                        className="team-logo-small"
+                        onError={(e) => { e.target.src = "/images/logos/default.png"; }}
+                      />
+                      <span className="team-name">{game.homeTeam.name}</span>
+                      <span className="team-score">{game.homeTeam.score}</span>
+                    </div>
+                    <span className="vs-separator">:</span>
+                    <div className="game-team away-team">
+                      <span className="team-score">{game.awayTeam.score}</span>
+                      <span className="team-name">{game.awayTeam.name}</span>
+                      <img
+                        src={game.awayTeam.logoUrl}
+                        alt={`${game.awayTeam.name} logo`}
+                        className="team-logo-small"
+                        onError={(e) => { e.target.src = "/images/logos/default.png"; }}
+                      />
+                    </div>
+                    <div className="game-status">{game.status}</div>
                   </div>
-                  <span className="vs-separator">:</span>
-                  <div className="game-team away-team">
-                    <span className="team-score">{game.awayTeam.score}</span>
-                    <span className="team-name">{game.awayTeam.name}</span>
-                    <img
-                      src={game.awayTeam.logoUrl}
-                      alt={`${game.awayTeam.name} logo`}
-                      className="team-logo-small"
-                      onError={(e) => { e.target.src = "/images/logos/default.png"; }}
-                    />
-                  </div>
-                  <div className="game-status">{game.status}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p>No live games currently.</p>
