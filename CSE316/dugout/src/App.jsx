@@ -63,7 +63,7 @@ function App() {
       <nav>
         <div className="nav-container">
           <ul className="navbar">
-            <li className="hideOnMobile"><Link to="/">KBO</Link></li>
+            <li className><Link to="/">KBO</Link></li>
             <li className={`dropdown hideOnMobile ${activeDropdown === 'top' ? 'active' : ''}`}>
               <a href="#" className="dropdown-toggle" onClick={() => handleDropdownClick('top')}>
                 Dugout
