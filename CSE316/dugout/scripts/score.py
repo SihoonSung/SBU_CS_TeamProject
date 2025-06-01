@@ -1,68 +1,67 @@
+from flask import Flask, Response
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
-from datetime import datetime
+import json
+import time
 
-# ChromeDriver 설정
-service = Service("/opt/homebrew/bin/chromedriver")
-options = Options()
-# options.add_argument("--headless")  # 디버깅 중이면 주석 처리
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
+app = Flask(__name__)
 
-driver = webdriver.Chrome(service=service, options=options)
+# 한글 → 영문 팀명 매핑
+team_name_map = {
+    "두산": "Doosan Bears",
+    "키움": "Kiwoom Heroes",
+    "한화": "Hanwha Eagles",
+    "NC": "NC Dinos",
+    "삼성": "Samsung Lions",
+    "LG": "LG Twins",
+    "KIA": "KIA Tigers",
+    "KT": "KT Wiz",
+    "SSG": "SSG Landers",
+    "롯데": "Lotte Giants"
+}
 
-# 오늘 날짜
-today = datetime.now().strftime("%Y-%m-%d")
-url = f"https://m.sports.naver.com/kbaseball/schedule/index?date={today}"
-driver.get(url)
+@app.route('/live-scores')
+def get_live_scores():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-# ✅ 경기 정보 로딩 기다리기
-try:
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "ul.ScheduleAllType_match_list__3n5L_ > li"))
-    )
-except:
-    print("❌ 경기를 불러오지 못했습니다.")
+    service = Service("/opt/homebrew/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    driver.get("https://m.sports.naver.com/kbaseball/schedule/index?date=2025-06-01")
+    time.sleep(3)
+    html = driver.page_source
     driver.quit()
-    exit()
 
-# BeautifulSoup로 파싱
-soup = BeautifulSoup(driver.page_source, "html.parser")
-driver.quit()
+    soup = BeautifulSoup(html, "html.parser")
+    match_boxes = soup.select(".MatchBox_match_item__3_D0Q")
 
-# ...
+    results = []
+    for match in match_boxes:
+        teams = match.select(".MatchBoxHeadToHeadArea_team__40JQL")
+        scores = match.select(".MatchBoxHeadToHeadArea_score__e2D7k")
+        status_tag = match.select_one(".MatchBox_status__2pbzi")
+        stadium_tag = match.select_one(".MatchBox_stadium__13gft")
 
-# 경기 정보 가져오기
-matches = soup.select("ul.ScheduleAllType_match_list__3n5L_ > li")
+        if len(teams) == 2 and len(scores) == 2:
+            team1_kor = teams[0].text.strip()
+            team2_kor = teams[1].text.strip()
 
-valid_matches = []
-for match in matches:
-    teams = match.select("strong.MatchBoxHeadToHeadArea_team__40JQL")
-    scores = match.select("strong.MatchBoxHeadToHeadArea_score__e2D7k")
-    status = match.select_one("em.MatchBox_status__2pbzi")
-    stadium = match.select_one("div.MatchBox_stadium__13gft")
+            result = {
+                "team1": team_name_map.get(team1_kor, team1_kor),
+                "score1": scores[0].text.strip(),
+                "team2": team_name_map.get(team2_kor, team2_kor),
+                "score2": scores[1].text.strip(),
+                "status": status_tag.text.strip() if status_tag else "",
+                "stadium": stadium_tag.text.strip() if stadium_tag else ""
+            }
+            results.append(result)
 
-    # ✅ 두 팀이 모두 존재할 때만 유효한 경기로 간주
-    if len(teams) == 2 and len(scores) == 2:
-        valid_matches.append({
-            "team1": teams[0].get_text(strip=True),
-            "team2": teams[1].get_text(strip=True),
-            "score1": scores[0].get_text(strip=True),
-            "score2": scores[1].get_text(strip=True),
-            "status": status.get_text(strip=True) if status else "",
-            "stadium": stadium.get_text(strip=True) if stadium else ""
-        })
-
-# 출력
-if not valid_matches:
-    print("❌ 오늘 경기 없음")
-else:
-    print(f"✅ 오늘 경기 수: {len(valid_matches)}\n")
-
-    for match in valid_matches:
-        print(f"📌 {match['team1']} {match['score1']} vs {match['score2']} {match['team2']} - {match['status']} @ {match['stadium']}")
+    return Response(
+        json.dumps(results, ensure_ascii=False),
+        content_type="application/json"
+    )
