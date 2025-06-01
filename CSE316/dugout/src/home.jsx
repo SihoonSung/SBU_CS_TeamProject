@@ -27,11 +27,11 @@ const Home = () => {
         <div className="home-page-container"> 
         <section 
             className="hero-section" 
-            style={{ backgroundImage: "url('/images/stadium_background.jpg')" }} //사진 경로는 일단 샘플로 해둠
+            style={{ backgroundImage: "url('/images/background.png')" }} 
         >
             <div className="hero-content">
             <h1>Welcome to Dugout</h1>
-            <p>KBO ~~~ system</p>
+            <p>KBO Database Web</p>
             </div>
         </section>
 

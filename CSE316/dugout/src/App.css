@@ -138,16 +138,16 @@ nav{
   --accent-color: #999;
 }
 
-.theme-ssg-landers { --primary-color: #9B2B24; --accent-color: #9B2B24; }
-.theme-samsung-lions { --primary-color: #3178D4; --accent-color: #3178D4; }
-.theme-lg-twins { --primary-color: #C44151; --accent-color: #C44151; }
-.theme-doosan-bears { --primary-color: #0F0B2A; --accent-color: #0F0B2A; }
-.theme-kt-wiz { --primary-color: #1F1F1F; --accent-color: #1F1F1F; }
-.theme-lotte-giants { --primary-color: #C92931; --accent-color: #C92931; }
-.theme-nc-dinos { --primary-color: #0D2559; --accent-color: #0D2559; }
-.theme-kia-tigers { --primary-color: #E68045; --accent-color: #E68045; }
-.theme-hanwha-eagles { --primary-color: #2B4A84; --accent-color: #2B4A84; }
-.theme-kiwoom-heroes { --primary-color: #6B1422; --accent-color: #6B1422; }
+.theme-ssg-landers { --primary-color: #BC2E34; --accent-color: #BC2E34; }
+.theme-samsung-lions { --primary-color: #3170BE; --accent-color: #3170BE; }
+.theme-lg-twins { --primary-color: #B74353; --accent-color: #B74353; }
+.theme-doosan-bears { --primary-color: #13122E; --accent-color: #13122E; }
+.theme-kt-wiz { --primary-color: #221F20; --accent-color: #221F20; }
+.theme-lotte-giants { --primary-color: #132B57; --accent-color: #132B57; }
+.theme-nc-dinos { --primary-color: #284579; --accent-color: #284579; }
+.theme-kia-tigers { --primary-color: #96302B; --accent-color: #96302B; }
+.theme-hanwha-eagles { --primary-color: #DE824C; --accent-color: #DE824C; }
+.theme-kiwoom-heroes { --primary-color: #631A27; --accent-color: #631A27; }
 
 .dropdown-toggle, .team-name, a {
   color: var(--primary-color);

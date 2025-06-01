@@ -12,8 +12,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative; 
-  background-color: var(--primary-color);
+  position: relative;
+  z-index: 2;
 }
 
 .hero-section::before {

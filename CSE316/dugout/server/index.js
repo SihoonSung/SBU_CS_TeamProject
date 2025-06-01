@@ -132,6 +132,17 @@ app.post("/api/update-image", upload.single("image"), async (req, res) => {
   }
 });
 
+app.post("/api/update-team", async (req, res) => {
+  const { email, newTeam } = req.body;
+  try {
+    const [result] = await pool.query("UPDATE users SET team = ? WHERE email = ?", [newTeam, email]);
+    res.json({ success: result.affectedRows > 0 });
+  } catch (error) {
+    console.error("Team update error:", error);
+    res.status(500).json({ success: false });
+  }
+});
+
 app.post("/api/posts", async (req, res) => {
   const { title, content, author } = req.body;
   try {

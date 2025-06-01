@@ -6,21 +6,27 @@ function MyInformation({ userProfile, setUserProfile }) {
     const [showImageModal, setShowImageModal] = useState(false);
     const [showPwModal, setShowPwModal] = useState(false);
     const [showNameModal, setShowNameModal] = useState(false);
+    const [showTeamModal, setShowTeamModal] = useState(false);
+
     const [newName, setNewName] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [newImage, setNewImage] = useState(null);
+    const [newTeam, setNewTeam] = useState('');
 
     const closeAllModals = () => {
         setShowImageModal(false);
         setShowPwModal(false);
         setShowNameModal(false);
+        setShowTeamModal(false);
         setNewName('');
         setNewPassword('');
         setNewImage(null);
+        setNewTeam('');
     };
 
     const email = userProfile?.email || "abc@google.com";
     const name = userProfile?.username || "John Doe";
+    const team = userProfile?.team || "No Team";
     const password = "******";
 
     const handleImage = async () => {
@@ -38,7 +44,7 @@ function MyInformation({ userProfile, setUserProfile }) {
             });
             const result = await response.json();
             if(result.success){
-                alert("update image");
+                alert("Image updated.");
                 setUserProfile(prev => ({
                     ...prev,
                     imageUrl: result.imageUrl,
@@ -53,8 +59,8 @@ function MyInformation({ userProfile, setUserProfile }) {
         }
     };
 
-    const handleName = async() => {
-        try{
+    const handleName = async () => {
+        try {
             const response = await fetch("http://localhost:3001/api/update-name", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -63,7 +69,6 @@ function MyInformation({ userProfile, setUserProfile }) {
                     newName: newName
                 })
             });
-            if (!response.ok) throw new Error("Request failed");
             const result = await response.json();
             if (result.success) {
                 alert("Updated name.");
@@ -72,14 +77,14 @@ function MyInformation({ userProfile, setUserProfile }) {
             } else {
                 alert("Name update failed.");
             }
-        }catch(err){
+        } catch (err) {
             console.error("Name update error:", err);
             alert("Server error.");
         }
     };
 
-    const handlePassword = async() => {
-        try{
+    const handlePassword = async () => {
+        try {
             const hashedPW = hashutil(userProfile.email, newPassword);
             const response = await fetch("http://localhost:3001/api/update-password", {
                 method: "POST",
@@ -90,14 +95,38 @@ function MyInformation({ userProfile, setUserProfile }) {
                 })
             });
             const result = await response.json();
-            if(result.success){
+            if (result.success) {
                 alert("Updated password.");
                 closeAllModals();
-            }else{
+            } else {
                 alert("Password update failed.");
             }
-        }catch(err){
+        } catch (err) {
             alert("Server error");
+        }
+    };
+
+    const handleTeam = async () => {
+        try {
+            const response = await fetch("http://localhost:3001/api/update-team", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: userProfile.email,
+                    newTeam: newTeam
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert("Team updated.");
+                setUserProfile(prev => ({ ...prev, team: newTeam }));
+                closeAllModals();
+            } else {
+                alert("Team update failed.");
+            }
+        } catch (err) {
+            console.error("Team update error:", err);
+            alert("Server error.");
         }
     };
 
@@ -130,18 +159,20 @@ function MyInformation({ userProfile, setUserProfile }) {
                     Name: {name}
                     <button className="change_name" onClick={() => setShowNameModal(true)}>Change Name</button>
                 </li>
+                <li>
+                    Team: {team}
+                    <button className="change_team" onClick={() => setShowTeamModal(true)}>Change Team</button>
+                </li>
             </ul>
+
+            {/* Image Modal */}
             {showImageModal && (
                 <>
                 <div className="overlay" onClick={closeAllModals}></div>
                 <div className="modal">
                     <div className="header">
-                    <h3>Change your image</h3>
-                    <span className="exit" onClick={closeAllModals}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="25px" viewBox="0 -960 960 960" width="25px" fill="#1f1f1f">
-                            <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
-                        </svg>
-                    </span>
+                        <h3>Change your image</h3>
+                        <span className="exit" onClick={closeAllModals}>×</span>
                     </div>
                     <div className="modal-body">
                         <h4>New Image</h4>
@@ -155,17 +186,14 @@ function MyInformation({ userProfile, setUserProfile }) {
                 </>
             )}
 
+            {/* Password Modal */}
             {showPwModal && (
                 <>
                 <div className="overlay" onClick={closeAllModals}></div>
                 <div className="modal">
                     <div className="header">
-                    <h3>Change your password</h3>
-                    <span className="exit" onClick={closeAllModals}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="25px" viewBox="0 -960 960 960" width="25px" fill="#1f1f1f">
-                            <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
-                        </svg>
-                    </span>
+                        <h3>Change your password</h3>
+                        <span className="exit" onClick={closeAllModals}>×</span>
                     </div>
                     <div className="modal-body">
                         <h4>New Password</h4>
@@ -178,17 +206,15 @@ function MyInformation({ userProfile, setUserProfile }) {
                 </div>
                 </>
             )}
+
+            {/* Name Modal */}
             {showNameModal && (
                 <>
                 <div className="overlay" onClick={closeAllModals}></div>
                 <div className="modal">
                     <div className="header">
-                    <h3>Change your name</h3>
-                    <span className="exit" onClick={closeAllModals}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="25px" viewBox="0 -960 960 960" width="25px" fill="#1f1f1f">
-                            <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
-                        </svg>
-                    </span>
+                        <h3>Change your name</h3>
+                        <span className="exit" onClick={closeAllModals}>×</span>
                     </div>
                     <div className="modal-body">
                         <h4>New Name</h4>
@@ -197,6 +223,39 @@ function MyInformation({ userProfile, setUserProfile }) {
                     <div className="buttons">
                         <button className="close" onClick={closeAllModals}>Close</button>
                         <button className="save" onClick={handleName}>Save changes</button>
+                    </div>
+                </div>
+                </>
+            )}
+
+            {/* Team Modal */}
+            {showTeamModal && (
+                <>
+                <div className="overlay" onClick={closeAllModals}></div>
+                <div className="modal">
+                    <div className="header">
+                        <h3>Change your team</h3>
+                        <span className="exit" onClick={closeAllModals}>×</span>
+                    </div>
+                    <div className="modal-body">
+                        <h4>Select New Team</h4>
+                        <select value={newTeam} onChange={(e) => setNewTeam(e.target.value)}>
+                            <option value="">-- Select your team --</option>
+                            <option value="Doosan Bears">Doosan Bears</option>
+                            <option value="LG Twins">LG Twins</option>
+                            <option value="Samsung Lions">Samsung Lions</option>
+                            <option value="Lotte Giants">Lotte Giants</option>
+                            <option value="SSG Landers">SSG Landers</option>
+                            <option value="Hanwha Eagles">Hanwha Eagles</option>
+                            <option value="NC Dinos">NC Dinos</option>
+                            <option value="KT Wiz">KT Wiz</option>
+                            <option value="KIA Tigers">KIA Tigers</option>
+                            <option value="Kiwoom Heroes">Kiwoom Heroes</option>
+                        </select>
+                    </div>
+                    <div className="buttons">
+                        <button className="close" onClick={closeAllModals}>Close</button>
+                        <button className="save" onClick={handleTeam}>Save changes</button>
                     </div>
                 </div>
                 </>
