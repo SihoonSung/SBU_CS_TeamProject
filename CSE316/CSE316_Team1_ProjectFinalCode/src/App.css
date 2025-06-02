@@ -1,0 +1,189 @@
+body{
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  margin: 0;
+  padding-top: 70px;
+  background-color: var(--background-color);
+  color: var(--primary-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dropdown{
+  position: relative;
+}
+.dropdown-menu {
+  display: none;
+  position: absolute; 
+  background-color: white;
+  list-style: none;
+  padding: 0; 
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  z-index: 999;
+  white-space: nowrap;
+}
+.dropdown.active .dropdown-menu {
+  display: block; 
+}
+.dropdown-menu li {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.dropdown-menu li a {
+  text-decoration: none;
+  color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height:100%;
+}
+
+nav{
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 998;
+  width: 100%;
+}
+.nav-container{
+  width: 100%;
+  margin: 0 auto;
+  padding: 1px 20px;
+  background-color: var(--primary-color);
+}
+.navbar {
+  width: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  height: 30px;        
+  list-style: none;
+  background-color: var(--primary-color);
+}
+.navbar li{
+  height: 50px;
+}
+.navbar a{
+  height: 100%;
+  padding: 0 30px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  color: white;
+}
+.navbar li:first-child{
+  margin-right: auto;
+}
+.navbar li:hover{
+  background-color: #555;
+}
+
+.sidebar {
+  position: relative; 
+  width: 100%;
+  background-color: white;
+  display: none;
+  flex-direction: column;
+  padding: 10px 0;
+  z-index: 0;
+}
+.sidebar li {
+  list-style: none;
+  width: 100%;
+}
+.sidebar li a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 10px;
+  text-decoration: none;
+  color: black;
+  font-size: 18px;
+  width: 100%;
+}
+.sidebar li:hover{
+  background-color: #aaa;
+}
+
+.menu-button{
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0 30px;
+  cursor: pointer;
+}
+
+@media(max-width: 850px){
+  .hideOnMobile{
+      display: none;
+  }
+  .menu-button{
+      display: block;
+  }
+}
+
+/* Theme Color Variables */
+:root {
+  --primary-color: #222;
+  --background-color: #f9f9f9;
+  --accent-color: #999;
+}
+
+.default-theme {
+  --primary-color: #222;
+  --background-color: #f9f9f9;
+  --accent-color: #999;
+}
+
+.theme-ssg-landers { --primary-color: #BC2E34; --accent-color: #BC2E34; }
+.theme-samsung-lions { --primary-color: #3170BE; --accent-color: #3170BE; }
+.theme-lg-twins { --primary-color: #B74353; --accent-color: #B74353; }
+.theme-doosan-bears { --primary-color: #13122E; --accent-color: #13122E; }
+.theme-kt-wiz { --primary-color: #221F20; --accent-color: #221F20; }
+.theme-lotte-giants { --primary-color: #132B57; --accent-color: #132B57; }
+.theme-nc-dinos { --primary-color: #284579; --accent-color: #284579; }
+.theme-kia-tigers { --primary-color: #96302B; --accent-color: #96302B; }
+.theme-hanwha-eagles { --primary-color: #DE824C; --accent-color: #DE824C; }
+.theme-kiwoom-heroes { --primary-color: #631A27; --accent-color: #631A27; }
+
+.dropdown-toggle, .team-name, a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* Themed Sections */
+.section-box,
+.stats-column,
+.team-list-container,
+.live-games-grid,
+.game-score-card {
+  border: 2px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 10px;
+  background-color: white;
+}
+
+.hero-content h1::after {
+  content: "";
+  display: block;
+  width: 120px;
+  height: 4px;
+  margin: 10px auto 0;
+  background-color: var(--primary-color);
+}

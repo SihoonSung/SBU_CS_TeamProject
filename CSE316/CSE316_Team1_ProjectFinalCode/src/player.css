@@ -1,0 +1,254 @@
+.player-page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
+
+.player-search-bar-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto 40px auto;
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    padding: 5px 8px;
+    box-shadow: 0 1px 6px rgba(32,33,36,.1);
+}
+
+.player-search-input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 10px 15px;
+    font-size: 1em;
+    background-color: transparent;
+}
+
+.player-search-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.player-search-button svg {
+    fill: #5f6368;
+}
+
+.top-players-section {
+    display: flex;
+    justify-content: space-around;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.top-list-container {
+    flex: 1;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.top-list-title {
+    font-size: 1.5em;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.top-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.top-list-item {
+    display: flex;
+    padding: 8px 0;
+    font-size: 1em;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.top-list-item:last-child {
+    border-bottom: none;
+}
+
+.player-rank {
+    font-weight: bold;
+    color: #007bff;
+    margin-right: 15px;
+    min-width: 20px;
+    text-align: right;
+}
+
+.player-name {
+    color: #495057;
+}
+
+.best-player-section {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.best-player-title {
+    font-size: 1.8em;
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 25px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.best-player-content {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.best-player-list-by-position {
+    flex: 1;
+    max-width: 350px;
+}
+
+.position-player-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f5;
+}
+.position-player-item:last-child {
+    border-bottom: none;
+}
+
+.player-position {
+    font-weight: bold;
+    color: #333;
+    width: 40px;
+    margin-right: 20px;
+    font-size: 0.95em;
+}
+
+.player-name-bp {
+    font-size: 0.95em;
+    color: #555;
+}
+
+.baseball-diamond-placeholder {
+    flex: 1.5;
+    min-height: 300px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 1px dashed #ced4da;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    max-height: 400px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.autocomplete-item:hover {
+    background-color: #f2f2f2;
+}
+
+#player-result-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.search-player-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 100%;
+}
+
+.search-player-info p {
+    margin: 8px 0;
+    font-size: 1em;
+}
+
+@media (max-width: 768px) {
+    .top-players-section {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .best-player-content {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .best-player-list-by-position {
+        width: 100%;
+        max-width: none;
+        margin-bottom: 30px;
+    }
+
+    .baseball-diamond-placeholder {
+        width: 100%;
+        max-width: 400px;
+        min-height: 250px;
+    }
+
+    .player-search-bar-container {
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .player-search-input {
+        font-size: 0.9em;
+    }
+
+    .top-list-title {
+        font-size: 1.3em;
+    }
+
+    .best-player-title {
+        font-size: 1.5em;
+    }
+
+    .baseball-diamond-placeholder {
+        min-height: 200px;
+    }
+}
