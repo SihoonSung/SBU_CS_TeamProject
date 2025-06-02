@@ -7,7 +7,7 @@ from torchvision import models, transforms
 from PIL import Image
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from torchvision.models import ResNet18_Weights
+import timm
 import pandas as pd
 import csv
 
@@ -69,8 +69,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
 # model
-model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
-model.fc = nn.Linear(model.fc.in_features, num_classes)
+model = timm.create_model('vit_base_patch16_224', pretrained=True, num_classes=num_classes)
 model = model.to(device)
 
 # loss & optimize
@@ -93,10 +92,10 @@ def accuracy(output, target, topk=(1,5)):
         return res
     
 
-results_dir = './results/resnet18'
+results_dir = './results/vit'
 os.makedirs(results_dir, exist_ok=True)
 
-output_csv = os.path.join(results_dir, 'ResNet18_results.csv')
+output_csv = os.path.join(results_dir, 'ViT_results.csv')
 plot_path = os.path.join(results_dir, 'accuracy_plot.png')
 model_path = os.path.join(results_dir, 'model_final.pth')
 
