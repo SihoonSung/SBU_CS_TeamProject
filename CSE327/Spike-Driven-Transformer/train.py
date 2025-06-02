@@ -1326,7 +1326,7 @@ def main():
                 plt.annotate(
                     f"{acc:.2f}%", (epoch, acc),
                     textcoords="offset points",
-                    xytext=(0, 5),  # 위로 살짝 띄우기
+                    xytext=(0, 5),
                     ha='center',
                     fontsize=8,
                     color="blue"
