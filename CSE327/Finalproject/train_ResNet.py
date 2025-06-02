@@ -20,7 +20,7 @@ print(primary_genres.value_counts())
 csv_path = './final_dataset.csv'
 img_root = './'
 num_classes = 25
-epochs = 5
+epochs = 100
 batch_size = 32
 learning_rate = 1e-4
 if torch.backends.mps.is_available() and torch.backends.mps.is_built():
