@@ -4,3 +4,6 @@ CSE327/.DS_Store
 .venv/
 Traditional_Model/Finalproject/.venv/
 Traditional_Model/Finalproject/images/
+
+
+echo "CSE327/Finalproject/results/vit/model_final.pth"
