@@ -20,11 +20,19 @@ print(primary_genres.value_counts())
 csv_path = './final_dataset.csv'
 img_root = './'
 num_classes = 25
-epochs = 1
+epochs = 5
 batch_size = 32
 learning_rate = 1e-4
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+    device = torch.device('mps')
+    print("Mac GPU")
+elif torch.cuda.is_available():
+    device = torch.device('cuda')
+    print("NVIDIA")
+else:
+    device = torch.device('cpu')
+    print("CPU")
+    
 # transform
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
