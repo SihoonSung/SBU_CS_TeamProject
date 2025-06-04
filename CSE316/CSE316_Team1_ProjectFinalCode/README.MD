@@ -39,3 +39,22 @@ Live games, and Schedules part.
 
 Also, on Mondays it the database does not show since there is no games.
 In tuesdays it will show up. 
+
+Due to the GitHub error, we put the venv file into the .gitignore file.
+So I think you should install it.
+So the first step is to make sure that pip is working properly, and make sure that your python version is 3.9 with these commands. 
+python3.9 -m ensurepip --upgrade
+python3.9 -m pip install --upgrade pip
+
+Then, you have to make a new virtual environment.
+python3.9 -m venv venv 
+source venv/bin/activate
+
+Then, please install the needed packages. 
+pip install flask flask-cors requests beautifulsoup4 selenium pymysql python-dotenv mysql-connector-python pandas
+
+Then you will be able to run the server with this command. 
+export FLASK_APP=score.py flask run --host=0.0.0.0 --port=5001
+If you have another problem, then please let me know. 
+Thank you!
+
